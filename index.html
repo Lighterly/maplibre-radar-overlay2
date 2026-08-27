@@ -3,25 +3,16 @@
 
 <head>
 	<meta charset="utf-8">
-
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
 	<title>RealtimeIRL Radar</title>
-
 	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
 	<script src="https://cdn.jsdelivr.net/npm/@rtirl/api@1.2.5/lib/index.min.js"></script>
-
 	<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 </head>
 
 <body class="m-0 h-screen w-screen overflow-hidden bg-transparent font-sans">
-
-
 	<main id="widget" aria-label="RealtimeIRL radar overlay"
 		class="relative h-[261px] w-[261px] overflow-hidden bg-transparent select-none">
-
-
 		<section id="radar" class="
         absolute
         left-6
@@ -36,10 +27,7 @@
         bg-[#080b0d]
         shadow-[0_0_7px_rgba(34,211,238,1),0_0_18px_rgba(34,211,238,.7),inset_0_0_10px_rgba(0,0,0,.65)]
       ">
-
 			<div id="map" class="absolute inset-0 h-full w-full"></div>
-
-
 			<div class="
           pointer-events-none
           absolute
@@ -48,8 +36,6 @@
           rounded-full
           shadow-[inset_0_0_10px_rgba(0,0,0,.75)]
         "></div>
-
-
 			<div class="
           pointer-events-none
           absolute
@@ -58,9 +44,6 @@
           rounded-full
           shadow-[inset_0_0_9px_rgba(0,0,0,.65)]
         "></div>
-
-
-
 			<div id="position-marker" class="
     absolute
     left-1/2
@@ -76,16 +59,8 @@
     border-cyan-400
     bg-[#163561]
     animate-avatar-pulse
-  ">
-
-				<img id="avatar" alt="" draggable="false" class="block h-full w-full object-cover">
-
+  "><img id="avatar" alt="" draggable="false" class="block h-full w-full object-cover"></div>
 			</div>
-
-			</div>
-
-
-
 			<div id="status" class="
           absolute
           left-2
@@ -100,11 +75,7 @@
           transition-opacity
           duration-200
         "></div>
-
 		</section>
-
-
-
 		<section id="info-card" class="
         absolute
         bottom-0
@@ -121,8 +92,6 @@
         shadow-[0_8px_24px_rgba(0,0,0,.32)]
         backdrop-blur-xl
       ">
-
-
 			<div class="
           flex
           h-[41px]
@@ -131,18 +100,13 @@
           border-b
           border-white/10
           px-[13px]
-        ">
-
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+        "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
 					class="size-6 mt-[-1px] h-4 w-4 shrink-0 text-cyan-400 drop-shadow-[0_0_7px_rgba(34,211,238,.8)]">
 					<path fill-rule="evenodd"
 						d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 0 0-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.145.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
 						clip-rule="evenodd" />
 				</svg>
-
-
 				<div class="min-w-0 flex-1">
-
 					<div id="neighborhood-skeleton" class="
               h-3
               w-20
@@ -150,7 +114,6 @@
               rounded
               bg-white/10
             "></div>
-
 					<div id="neighborhood" class="
               hidden
               truncate
@@ -159,8 +122,6 @@
               leading-3
               text-white
             "></div>
-
-
 					<div id="region-skeleton" class="
               mt-1
               h-2.5
@@ -169,7 +130,6 @@
               rounded
               bg-white/5
             "></div>
-
 					<div id="region" class="
               hidden
               truncate
@@ -178,13 +138,8 @@
               leading-2.5
               text-white/40
             "></div>
-
 				</div>
-
 			</div>
-
-
-
 			<div class="
           flex
           h-[38px]
@@ -192,9 +147,7 @@
           justify-between
           px-3
         ">
-
 				<div class="flex flex-col justify-center">
-
 					<div class="
               text-[7px]
               font-extrabold
@@ -202,40 +155,23 @@
               leading-[8px]
               tracking-[.45px]
               text-white/40
-            ">
-						Velocidade
-					</div>
-
-					<div class="flex items-baseline gap-[3px]">
-
-						<span id="speed" class="
+            "> Velocidade </div>
+					<div class="flex items-baseline gap-[3px]"><span id="speed" class="
                 text-[16px]
                 font-black
                 leading-[17px]
                 tracking-[-.2px]
                 text-cyan-400
-              ">
-							--
-						</span>
-
-						<span class="
+              "> -- </span><span class="
                 text-[7px]
                 font-extrabold
                 uppercase
                 leading-2
                 tracking-[.3px]
                 text-white/40
-              ">
-							km/h
-						</span>
-
-					</div>
-
+              "> km/h </span></div>
 				</div>
-
-
 				<div class="mt-px text-right">
-
 					<div id="clock-label" class="
               max-w-[85px]
               truncate
@@ -245,10 +181,7 @@
               leading-2
               tracking-[.45px]
               text-white/40
-            ">
-						Carregando...
-					</div>
-
+            "> Carregando... </div>
 					<div id="clock" class="
               mt-px
               text-[11px]
@@ -257,398 +190,180 @@
               tracking-[.2px]
               text-white/90
               tabular-nums
-            ">
-						--:--:--
-					</div>
-
+            "> --:--:-- </div>
 				</div>
-
 			</div>
-
 		</section>
-
 	</main>
-
-
 	<script>
 		(() => {
 			"use strict";
-
-
-
 			const params = new URLSearchParams(window.location.search);
-
-			const pullKey =
-				params.get("pullKey") ||
-				params.get("key") ||
-				"";
-
-			const mainColor =
-				sanitizeColor(
-					params.get("mainColor") || "#00eaff"
-				);
-
-			const bgColor =
-				sanitizeColor(
-					params.get("bgColor") || "#11131a"
-				);
-
-			const avatarURL =
-				params.get("avatarURL") ||
-				"";
-
-			const avatarOpacity =
-				clamp(
-					parseFloat(
-						params.get("avatarOpacity") ?? "1"
-					),
-					0,
-					1
-				);
-
-
-
-			const radar =
-				document.getElementById("radar");
-
-			const infoCard =
-				document.getElementById("info-card");
-
-			const avatar =
-				document.getElementById("avatar");
-
-			const speedEl =
-				document.getElementById("speed");
-
-			const clockEl =
-				document.getElementById("clock");
-
-			const clockLabelEl =
-				document.getElementById("clock-label");
-
-			const statusEl =
-				document.getElementById("status");
-
-			const neighborhoodEl =
-				document.getElementById("neighborhood");
-
-			const regionEl =
-				document.getElementById("region");
-
-			const neighborhoodSkeleton =
-				document.getElementById("neighborhood-skeleton");
-
-			const regionSkeleton =
-				document.getElementById("region-skeleton");
-
-
-
+			const pullKey = params.get("pullKey") || params.get("key") || "";
+			const mainColor = sanitizeColor(params.get("mainColor") || "#00eaff");
+			const bgColor = sanitizeColor(params.get("bgColor") || "#11131a");
+			const avatarURL = params.get("avatarURL") || "";
+			const avatarOpacity = clamp(parseFloat(params.get("avatarOpacity") ?? "1"), 0, 1);
+			const radar = document.getElementById("radar");
+			const infoCard = document.getElementById("info-card");
+			const avatar = document.getElementById("avatar");
+			const speedEl = document.getElementById("speed");
+			const clockEl = document.getElementById("clock");
+			const clockLabelEl = document.getElementById("clock-label");
+			const statusEl = document.getElementById("status");
+			const neighborhoodEl = document.getElementById("neighborhood");
+			const regionEl = document.getElementById("region");
+			const neighborhoodSkeleton = document.getElementById("neighborhood-skeleton");
+			const regionSkeleton = document.getElementById("region-skeleton");
 			radar.style.borderColor = mainColor;
-
 			radar.style.boxShadow = `
         0 0 7px ${mainColor},
         0 0 18px ${hexToRgba(mainColor, 0.7)},
         inset 0 0 10px rgba(0,0,0,.65)
       `;
-
-			infoCard.style.backgroundColor =
-				hexToRgba(bgColor, 0.96);
-
-			speedEl.style.color =
-				mainColor;
-
-			statusEl.style.backgroundColor =
-				mainColor;
-
-			statusEl.style.boxShadow =
-				`0 0 7px ${mainColor}`;
-
-			avatar.style.opacity =
-				String(avatarOpacity);
-
-
-
-			const fallbackAvatar =
-				makeFallbackAvatar(mainColor);
-
-			avatar.src =
-				avatarURL || fallbackAvatar;
-
-			avatar.addEventListener(
-				"error",
+			infoCard.style.backgroundColor = hexToRgba(bgColor, 0.96);
+			speedEl.style.color = mainColor;
+			statusEl.style.backgroundColor = mainColor;
+			statusEl.style.boxShadow = `0 0 7px ${mainColor}`;
+			avatar.style.opacity = String(avatarOpacity);
+			const fallbackAvatar = makeFallbackAvatar(mainColor);
+			avatar.src = avatarURL || fallbackAvatar;
+			avatar.addEventListener("error",
 				() => {
 					if (avatar.src !== fallbackAvatar) {
 						avatar.src = fallbackAvatar;
 					}
-				},
-				{ once: true }
-			);
-
-
-
+				}, {
+				once: true
+			});
 			const routeCoordinates = [];
-
 			let map = null;
-
 			let data = null;
-
 			let markerReady = false;
-
 			let firstFixReceived = false;
-
 			let lastCoordinate = null;
-
 			let lastGeocodedCoordinate = null;
-
 			let geocodingInProgress = false;
-
 			let locationSubscription = null;
-
 			let speedSubscription = null;
-
 			let headingSubscription = null;
-
 			let streamerTimeZone = null;
-
 			let streamerTimeZoneSource = null;
-
 			let lastStreamerTimestamp = null;
-
-
-
 			const defaultCenter = [0, 0];
-
 			const GEOCODE_DISTANCE_METERS = 100;
-
-			const GOOGLE_SATELLITE_TILES = [
-				"https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-				"https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-				"https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-				"https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-			];
-
-
+			const GOOGLE_SATELLITE_TILES = ["https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"];
 
 			function clamp(value, min, max) {
 				if (!Number.isFinite(value)) {
 					return min;
 				}
-
-				return Math.min(
-					max,
-					Math.max(min, value)
-				);
+				return Math.min(max, Math.max(min, value));
 			}
-
 
 			function toNumber(value) {
-				const number =
-					Number(value);
-
-				return Number.isFinite(number)
-					? number
-					: null;
+				const number = Number(value);
+				return Number.isFinite(number) ? number : null;
 			}
 
-
 			function sanitizeColor(value) {
-				const color =
-					String(value || "").trim();
-
-				if (
-					/^#[0-9a-fA-F]{3,8}$/.test(color)
-				) {
+				const color = String(value || "").trim();
+				if (/^#[0-9a-fA-F]{3,8}$/.test(color)) {
 					return color;
 				}
-
 				return "#00eaff";
 			}
 
-
 			function hexToRgba(hex, alpha) {
-				let value =
-					hex.replace("#", "");
-
+				let value = hex.replace("#", "");
 				if (value.length === 3) {
-					value =
-						value
-							.split("")
-							.map(char => char + char)
-							.join("");
+					value = value.split("").map(char => char + char).join("");
 				}
-
 				if (value.length < 6) {
 					return `rgba(0,234,255,${alpha})`;
 				}
-
-				const r =
-					parseInt(value.slice(0, 2), 16);
-
-				const g =
-					parseInt(value.slice(2, 4), 16);
-
-				const b =
-					parseInt(value.slice(4, 6), 16);
-
+				const r = parseInt(value.slice(0, 2), 16);
+				const g = parseInt(value.slice(2, 4), 16);
+				const b = parseInt(value.slice(4, 6), 16);
 				return `rgba(${r},${g},${b},${alpha})`;
 			}
 
-
 			function escapeXml(value) {
-				return String(value).replace(
-					/[<>&'"]/g,
-					character => ({
-						"<": "&lt;",
-						">": "&gt;",
-						"&": "&amp;",
-						"'": "&apos;",
-						'"': "&quot;"
-					})[character]
-				);
+				return String(value).replace(/[<>&'"]/g, character => ({
+					"<": "&lt;",
+					">": "&gt;",
+					"&": "&amp;",
+					"'": "&apos;",
+					'"': "&quot;"
+				})[character]);
 			}
-
 
 			function makeFallbackAvatar(color) {
 				const svg = `
           <svg
-            xmlns="http://www.w3.org/2000/svg"
+xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 100 100"
-          >
-            <rect
+          ><rect
               width="100"
               height="100"
               fill="#163b71"
-            />
-
-            <circle
+            /><circle
               cx="50"
               cy="39"
               r="17"
               fill="${escapeXml(color)}"
-            />
-
-            <path
+            /><path
               d="M20 88c3-22 15-32 30-32s27 10 30 32"
               fill="${escapeXml(color)}"
-            />
-          </svg>
+            /></svg>
         `;
-
-				return (
-					"data:image/svg+xml;charset=UTF-8," +
-					encodeURIComponent(svg)
-				);
+				return ("data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg));
 			}
-
-
 			/*
 			============================================================
 			DISTANCE
 			============================================================
 			*/
-
 			function metersBetween(a, b) {
-				const earthRadius =
-					6371008.8;
-
-				const p1 =
-					a.latitude *
-					Math.PI /
-					180;
-
-				const p2 =
-					b.latitude *
-					Math.PI /
-					180;
-
-				const dp =
-					(b.latitude - a.latitude) *
-					Math.PI /
-					180;
-
-				const dl =
-					(b.longitude - a.longitude) *
-					Math.PI /
-					180;
-
-				const h =
-					Math.sin(dp / 2) ** 2 +
-					Math.cos(p1) *
-					Math.cos(p2) *
-					Math.sin(dl / 2) ** 2;
-
-				return (
-					2 *
-					earthRadius *
-					Math.asin(
-						Math.sqrt(h)
-					)
-				);
+				const earthRadius = 6371008.8;
+				const p1 = a.latitude * Math.PI / 180;
+				const p2 = b.latitude * Math.PI / 180;
+				const dp = (b.latitude - a.latitude) * Math.PI / 180;
+				const dl = (b.longitude - a.longitude) * Math.PI / 180;
+				const h = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+				return (2 * earthRadius * Math.asin(Math.sqrt(h)));
 			}
-
-
 			/*
 			============================================================
 			NORMALIZE RTIRL LOCATION
 			============================================================
 			*/
-
 			function normalizeLocation(location) {
 				if (!location) {
 					return null;
 				}
-
-				const latitude =
-					toNumber(
-						location.latitude ??
-						location.lat ??
-						location.coords?.latitude ??
-						location.location?.latitude
-					);
-
-				const longitude =
-					toNumber(
-						location.longitude ??
-						location.lng ??
-						location.lon ??
-						location.coords?.longitude ??
-						location.location?.longitude
-					);
-
-				if (
-					latitude === null ||
-					longitude === null
-				) {
+				const latitude = toNumber(location.latitude ?? location.lat ?? location.coords?.latitude ?? location.location?.latitude);
+				const longitude = toNumber(location.longitude ?? location.lng ?? location.lon ?? location.coords?.longitude ?? location.location?.longitude);
+				if (latitude === null || longitude === null) {
 					return null;
 				}
-
-				if (
-					latitude < -90 ||
-					latitude > 90 ||
-					longitude < -180 ||
-					longitude > 180
-				) {
+				if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
 					return null;
 				}
-
 				return {
 					latitude,
 					longitude
 				};
 			}
-
-
 			/*
 			============================================================
 			TRY TO FIND A TIMESTAMP IN RTIRL DATA
 			============================================================
 			*/
-
 			function extractTimestamp(value) {
 				if (!value) {
 					return null;
 				}
-
 				const candidates = [
 					value.timestamp,
 					value.timeStamp,
@@ -659,50 +374,34 @@
 					value.updatedAt,
 					value.coords?.timestamp
 				];
-
 				for (const candidate of candidates) {
 					if (candidate === undefined || candidate === null) {
 						continue;
 					}
-
-					const parsed =
-						candidate instanceof Date
-							? candidate.getTime()
-							: Date.parse(candidate);
-
+					const parsed = candidate instanceof Date ? candidate.getTime() : Date.parse(candidate);
 					if (Number.isFinite(parsed)) {
 						return parsed;
 					}
-
-					const numeric =
-						Number(candidate);
-
+					const numeric = Number(candidate);
 					if (Number.isFinite(numeric)) {
-						return numeric < 10000000000
-							? numeric * 1000
-							: numeric;
+						return numeric < 10000000000 ? numeric * 1000 : numeric;
 					}
 				}
-
 				return null;
 			}
-
-
 			/*
-			============================================================
-			TRY TO FIND A TIMEZONE IN RTIRL DATA
-	  
-			RTIRL's public listener API does not require a timezone field,
-			so this intentionally checks common possible metadata fields
-			without assuming they exist.
-			============================================================
-			*/
-
+		============================================================
+		TRY TO FIND A TIMEZONE IN RTIRL DATA
+  
+		RTIRL's public listener API does not require a timezone field,
+		so this intentionally checks common possible metadata fields
+		without assuming they exist.
+		============================================================
+		*/
 			function extractTimeZone(value) {
 				if (!value) {
 					return null;
 				}
-
 				const candidates = [
 					value?.timeZone,
 					value?.timezone,
@@ -714,76 +413,48 @@
 					value.streamer?.timeZone,
 					value.streamer?.timezone
 				];
-
 				for (const candidate of candidates) {
-					if (
-						typeof candidate === "string" &&
-						isValidTimeZone(candidate)
-					) {
+					if (typeof candidate === "string" && isValidTimeZone(candidate)) {
 						return candidate;
 					}
 				}
-
 				return null;
 			}
 
-
 			function isValidTimeZone(timeZone) {
-				if (
-					typeof timeZone !== "string" ||
-					!timeZone
-				) {
+				if (typeof timeZone !== "string" || !timeZone) {
 					return false;
 				}
-
 				try {
-					new Intl.DateTimeFormat(
-						"en-US",
-						{ timeZone }
-					);
-
+					new Intl.DateTimeFormat("en-US", {
+						timeZone
+					});
 					return true;
 				} catch {
 					return false;
 				}
 			}
 
-
 			function setTimeZone(timeZone, source = "location") {
 				if (!isValidTimeZone(timeZone)) {
 					return false;
 				}
-
-				streamerTimeZone =
-					timeZone;
-
-				streamerTimeZoneSource =
-					source;
-
+				streamerTimeZone = timeZone;
+				streamerTimeZoneSource = source;
 				updateClock();
-
 				return true;
 			}
 
-
 			function formatTimeZoneLabel(timeZone) {
 				try {
-					const parts =
-						timeZone.split("/");
-
-					const city =
-						parts.at(-1)
-							?.replaceAll("_", " ");
-
+					const parts = timeZone.split("/");
+					const city = parts.at(-1)?.replaceAll("_", " ");
 					if (city) {
 						return city;
 					}
 				} catch (_) { }
-
 				return "Local time";
 			}
-
-
 			const stateTimezones = {
 				"US-AL": "America/Chicago",
 				"US-AK": "America/Anchorage",
@@ -839,116 +510,54 @@
 
 			function getTimezone(principalSubdivisionCode) {
 				const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
 				return stateTimezones[principalSubdivisionCode] ?? browserTimezone;
 			}
 
 			function updateClock() {
 				if (!data) return;
-
 				const timeZone = getTimezone(data.principalSubdivisionCode);
-
-				const timestamp =
-					lastStreamerTimestamp ||
-					Date.now();
-
-				clockEl.textContent =
-					new Intl.DateTimeFormat(
-						"pt-BR",
-						{
-							timeZone,
-							hour: "2-digit",
-							minute: "2-digit",
-							second: "2-digit",
-							hour12: false
-						}
-					).format(
-						new Date(timestamp)
-					);
+				const timestamp = lastStreamerTimestamp || Date.now();
+				clockEl.textContent = new Intl.DateTimeFormat("pt-BR", {
+					timeZone,
+					hour: "2-digit",
+					minute: "2-digit",
+					second: "2-digit",
+					hour12: false
+				}).format(new Date(timestamp));
 			}
-
-
-
-			async function reverseGeocode(
-				latitude,
-				longitude
-			) {
-				const url =
-					new URL(
-						"https://api.bigdatacloud.net/data/reverse-geocode-client"
-					);
-
-				url.searchParams.set(
-					"latitude",
-					latitude
-				);
-
-				url.searchParams.set(
-					"longitude",
-					longitude
-				);
-
-				url.searchParams.set(
-					"localityLanguage",
-					"en"
-				);
-
-				const response =
-					await fetch(
-						url.toString(),
-						{
-							method: "GET",
-							cache: "no-store"
-						}
-					);
-
+			async function reverseGeocode(latitude, longitude) {
+				const url = new URL("https://api.bigdatacloud.net/data/reverse-geocode-client");
+				url.searchParams.set("latitude", latitude);
+				url.searchParams.set("longitude", longitude);
+				url.searchParams.set("localityLanguage", "en");
+				const response = await fetch(url.toString(), {
+					method: "GET",
+					cache: "no-store"
+				});
 				if (!response.ok) {
-					throw new Error(
-						`Reverse geocoding failed: ${response.status}`
-					);
+					throw new Error(`Reverse geocoding failed: ${response.status}`);
 				}
-
 				return response.json();
 			}
-
-
 
 			function extractGeocoderTimeZone(data) {
 				if (!data) {
 					return null;
 				}
-
 				const directCandidates = [
 					data.timeZone,
 					data.timezone,
 					data.ianaTimeZone,
 					data.ianaTimezone
 				];
-
-				for (
-					const candidate
-					of directCandidates
-				) {
-					if (
-						typeof candidate === "string" &&
-						isValidTimeZone(candidate)
-					) {
+				for (const candidate of directCandidates) {
+					if (typeof candidate === "string" && isValidTimeZone(candidate)) {
 						return candidate;
 					}
 				}
-
-
-
-				const informative =
-					data.localityInfo?.informative;
-
-				if (
-					Array.isArray(informative)
-				) {
-					for (
-						const item
-						of informative
-					) {
+				const informative = data.localityInfo?.informative;
+				if (Array.isArray(informative)) {
+					for (const item of informative) {
 						const candidates = [
 							item.timeZone,
 							item.timezone,
@@ -957,634 +566,255 @@
 							item.name,
 							item.isoName
 						];
-
-						for (
-							const candidate
-							of candidates
-						) {
-							if (
-								typeof candidate === "string" &&
-								isValidTimeZone(candidate)
-							) {
+						for (const candidate of candidates) {
+							if (typeof candidate === "string" && isValidTimeZone(candidate)) {
 								return candidate;
 							}
 						}
 					}
 				}
-
 				return null;
 			}
 
-
-
-			function showLocation(
-				data
-			) {
+			function showLocation(data) {
 				console.log(data);
-
-				const neighborhood =
-					data.locality ||
-					data.neighbourhood ||
-					data.suburb ||
-					data.cityDistrict ||
-					"";
-
-				const city =
-					data.city ||
-					data.town ||
-					data.village ||
-					"";
-
-				const country =
-					data.countryName ||
-					"";
-
-
-
+				const neighborhood = data.locality || data.neighbourhood || data.suburb || data.cityDistrict || "";
+				const city = data.city || data.town || data.village || "";
+				const country = data.countryName || "";
 				if (neighborhood) {
-					neighborhoodEl.textContent =
-						neighborhood;
-
-					neighborhoodEl.classList.remove(
-						"hidden"
-					);
-
-					neighborhoodSkeleton.classList.add(
-						"hidden"
-					);
+					neighborhoodEl.textContent = neighborhood;
+					neighborhoodEl.classList.remove("hidden");
+					neighborhoodSkeleton.classList.add("hidden");
 				}
-
-
-
 				const regionParts = [
 					city,
 					data.countryCode
 				].filter(Boolean);
-
 				if (regionParts.length) {
-					regionEl.textContent =
-						regionParts.join(", ");
-
-					regionEl.classList.remove(
-						"hidden"
-					);
-
-					regionSkeleton.classList.add(
-						"hidden"
-					);
+					regionEl.textContent = regionParts.join(", ");
+					regionEl.classList.remove("hidden");
+					regionSkeleton.classList.add("hidden");
 				}
-
 				clockLabelEl.textContent = data.principalSubdivision;
 			}
-
-
-			async function updateLocationDetails(
-				location
-			) {
-				if (
-					geocodingInProgress
-				) {
+			async function updateLocationDetails(location) {
+				if (geocodingInProgress) {
 					return;
 				}
-
-				if (
-					lastGeocodedCoordinate &&
-					metersBetween(
-						lastGeocodedCoordinate,
-						location
-					) <
-					GEOCODE_DISTANCE_METERS
-				) {
+				if (lastGeocodedCoordinate && metersBetween(lastGeocodedCoordinate, location) < GEOCODE_DISTANCE_METERS) {
 					return;
 				}
-
 				lastGeocodedCoordinate = {
 					...location
 				};
-
-				geocodingInProgress =
-					true;
-
+				geocodingInProgress = true;
 				try {
-					data =
-						await reverseGeocode(
-							location.latitude,
-							location.longitude
-						);
-
+					data = await reverseGeocode(location.latitude, location.longitude);
 					showLocation(data);
-
-
-
-					if (
-						!streamerTimeZone
-					) {
-						const timeZone =
-							extractGeocoderTimeZone(data);
-
+					if (!streamerTimeZone) {
+						const timeZone = extractGeocoderTimeZone(data);
 						if (timeZone) {
-							setTimeZone(
-								timeZone,
-								"geocoder"
-							);
+							setTimeZone(timeZone, "geocoder");
 						}
 					}
-
 				} catch (error) {
-					console.warn(
-						"RealtimeIRL reverse geocoding error:",
-						error
-					);
+					console.warn("RealtimeIRL reverse geocoding error:", error);
 				} finally {
-					geocodingInProgress =
-						false;
+					geocodingInProgress = false;
 				}
 			}
-
-
 
 			function initializeMap() {
-				if (
-					typeof maplibregl ===
-					"undefined"
-				) {
-					console.error(
-						"MapLibre GL JS failed to load."
-					);
-
+				if (typeof maplibregl === "undefined") {
+					console.error("MapLibre GL JS failed to load.");
 					return;
 				}
-
-
-				map =
-					new maplibregl.Map({
-						container: "map",
-
-						style: {
-							version: 8,
-
-							sources: {
-								"google-satellite": {
-									type: "raster",
-
-									tiles:
-										GOOGLE_SATELLITE_TILES,
-
-									tileSize: 256,
-
-									attribution:
-										"Google"
-								}
-							},
-
-							layers: [
-								{
-									id:
-										"google-satellite-layer",
-
-									type:
-										"raster",
-
-									source:
-										"google-satellite",
-
-									minzoom: 0,
-
-									maxzoom: 22
-								}
-							]
+				map = new maplibregl.Map({
+					container: "map",
+					style: {
+						version: 8,
+						sources: {
+							"google-satellite": {
+								type: "raster",
+								tiles: GOOGLE_SATELLITE_TILES,
+								tileSize: 256,
+								attribution: "Google"
+							}
 						},
-
-						center:
-							defaultCenter,
-
-						zoom: params.get("zoom") || 16,
-						pitch: params.get("pitch") || 0,
-
-						minZoom: 2,
-
-						maxZoom: 22,
-
-						attributionControl:
-							false,
-
-						interactive:
-							false,
-
-						preserveDrawingBuffer:
-							true,
-
-						antialias:
-							true
-					});
-
-
-				map.on(
-					"load",
+						layers: [{
+							id: "google-satellite-layer",
+							type: "raster",
+							source: "google-satellite",
+							minzoom: 0,
+							maxzoom: 22
+						}]
+					},
+					center: defaultCenter,
+					zoom: params.get("zoom") || 16,
+					pitch: params.get("pitch") || 0,
+					minZoom: 2,
+					maxZoom: 22,
+					attributionControl: false,
+					interactive: false,
+					preserveDrawingBuffer: true,
+					antialias: true
+				});
+				map.on("load",
 					() => {
-
-						map.addSource(
-							"travel-route",
-							{
-								type: "geojson",
-
-								data: {
-									type: "Feature",
-
-									properties: {},
-
-									geometry: {
-										type: "LineString",
-
-										coordinates: []
-									}
+						map.addSource("travel-route", {
+							type: "geojson",
+							data: {
+								type: "Feature",
+								properties: {},
+								geometry: {
+									type: "LineString",
+									coordinates: []
 								}
 							}
-						);
-
-
-
+						});
 						map.addLayer({
-							id:
-								"travel-route-glow",
-
-							type:
-								"line",
-
-							source:
-								"travel-route",
-
+							id: "travel-route-glow",
+							type: "line",
+							source: "travel-route",
 							layout: {
-								"line-cap":
-									"round",
-
-								"line-join":
-									"round"
+								"line-cap": "round",
+								"line-join": "round"
 							},
-
 							paint: {
-								"line-color":
-									mainColor,
-
-								"line-width":
-									10,
-
-								"line-opacity":
-									0.2,
-
-								"line-blur":
-									2.5
+								"line-color": mainColor,
+								"line-width": 10,
+								"line-opacity": 0.2,
+								"line-blur": 2.5
 							}
 						});
-
-
-
 						map.addLayer({
-							id:
-								"travel-route-line",
-
-							type:
-								"line",
-
-							source:
-								"travel-route",
-
+							id: "travel-route-line",
+							type: "line",
+							source: "travel-route",
 							layout: {
-								"line-cap":
-									"round",
-
-								"line-join":
-									"round"
+								"line-cap": "round",
+								"line-join": "round"
 							},
-
 							paint: {
-								"line-color":
-									mainColor,
-
-								"line-width":
-									2.2,
-
-								"line-opacity":
-									0.95
+								"line-color": mainColor,
+								"line-width": 2.2,
+								"line-opacity": 0.95
 							}
 						});
-
-
-						markerReady =
-							true;
-
+						markerReady = true;
 						updateRouteSource();
-					}
-				);
+					});
 			}
-
-
 
 			function updateRouteSource() {
-				if (
-					!map ||
-					!markerReady ||
-					!map.getSource(
-						"travel-route"
-					)
-				) {
+				if (!map || !markerReady || !map.getSource("travel-route")) {
 					return;
 				}
-
-				map
-					.getSource(
-						"travel-route"
-					)
-					.setData({
-						type: "Feature",
-
-						properties: {},
-
-						geometry: {
-							type: "LineString",
-
-							coordinates:
-								routeCoordinates
-						}
-					});
+				map.getSource("travel-route").setData({
+					type: "Feature",
+					properties: {},
+					geometry: {
+						type: "LineString",
+						coordinates: routeCoordinates
+					}
+				});
 			}
 
-
-
-			function applyLocation(
-				rawLocation
-			) {
-				const location =
-					normalizeLocation(
-						rawLocation
-					);
-
+			function applyLocation(rawLocation) {
+				const location = normalizeLocation(rawLocation);
 				if (!location) {
 					return;
 				}
-
-
-
-				const timestamp =
-					extractTimestamp(
-						rawLocation
-					);
-
+				const timestamp = extractTimestamp(rawLocation);
 				if (timestamp) {
-					lastStreamerTimestamp =
-						timestamp;
+					lastStreamerTimestamp = timestamp;
 				}
-
-
-
-				const rtirlTimeZone =
-					extractTimeZone(
-						rawLocation
-					);
-
-				if (
-					rtirlTimeZone &&
-					!streamerTimeZone
-				) {
-					setTimeZone(
-						rtirlTimeZone,
-						"rtirl"
-					);
+				const rtirlTimeZone = extractTimeZone(rawLocation);
+				if (rtirlTimeZone && !streamerTimeZone) {
+					setTimeZone(rtirlTimeZone, "rtirl");
 				}
-
-
-
 				const coordinate = [
 					location.longitude,
 					location.latitude
 				];
-
-
 				if (!firstFixReceived) {
-					firstFixReceived =
-						true;
-
+					firstFixReceived = true;
 					map?.jumpTo({
-						center:
-							coordinate,
-
-						zoom:
-							16
+						center: coordinate,
+						zoom: 16
 					});
-
 				} else {
 					map?.jumpTo({
-						center:
-							coordinate
+						center: coordinate
 					});
 				}
-
-
-
-				if (
-					!lastCoordinate ||
-					metersBetween(
-						lastCoordinate,
-						location
-					) >= 2
-				) {
-					routeCoordinates.push(
-						coordinate
-					);
-
-					lastCoordinate =
-						location;
-
+				if (!lastCoordinate || metersBetween(lastCoordinate, location) >= 2) {
+					routeCoordinates.push(coordinate);
+					lastCoordinate = location;
 					updateRouteSource();
 				}
-
-
-
-				statusEl.classList.remove(
-					"opacity-0"
-				);
-
-				statusEl.classList.add(
-					"opacity-100"
-				);
-
-
-
-				updateLocationDetails(
-					location
-				);
-
-
-
+				statusEl.classList.remove("opacity-0");
+				statusEl.classList.add("opacity-100");
+				updateLocationDetails(location);
 				updateClock();
 			}
 
-
-
-			function applySpeed(
-				speed
-			) {
-				const numericSpeed =
-					toNumber(speed);
-
-				if (
-					numericSpeed === null
-				) {
+			function applySpeed(speed) {
+				const numericSpeed = toNumber(speed);
+				if (numericSpeed === null) {
 					return;
 				}
-
-
-				const kmh =
-					numericSpeed * 3.6;
-
-				speedEl.textContent =
-					Math.max(
-						0,
-						Math.round(kmh)
-					);
+				const kmh = numericSpeed * 3.6;
+				speedEl.textContent = Math.max(0, Math.round(kmh));
 			}
-
-
 
 			function connectToPullKey() {
 				if (!pullKey) {
-					console.error(
-						"Missing pullKey URL parameter."
-					);
-
+					console.error("Missing pullKey URL parameter.");
 					return;
 				}
-
-
-				if (
-					typeof RealtimeIRL ===
-					"undefined"
-				) {
-					console.error(
-						"RealtimeIRL API failed to load."
-					);
-
+				if (typeof RealtimeIRL === "undefined") {
+					console.error("RealtimeIRL API failed to load.");
 					return;
 				}
-
-
-				const client =
-					RealtimeIRL.forPullKey(
-						pullKey
-					);
-
-
-				locationSubscription =
-					client.addLocationListener(
-						location => {
-							applyLocation(
-								location
-							);
-						},
-
-						error => {
-							console.error(
-								"RealtimeIRL location error:",
-								error
-							);
-						}
-					);
-
-
-
-				speedSubscription =
-					client.addSpeedListener(
-						speed => {
-							applySpeed(
-								speed
-							);
-						},
-
-						error => {
-							console.error(
-								"RealtimeIRL speed error:",
-								error
-							);
-						}
-					);
-
-
-
-				if (
-					typeof client.addHeadingListener ===
-					"function"
-				) {
-					headingSubscription =
-						client.addHeadingListener(
-							heading => {
-
-
-								const value =
-									toNumber(
-										heading
-									);
-
-								if (
-									value !== null
-								) {
-								}
-							},
-
-							error => {
-								console.error(
-									"RealtimeIRL heading error:",
-									error
-								);
-							}
-						);
+				const client = RealtimeIRL.forPullKey(pullKey);
+				locationSubscription = client.addLocationListener(location => {
+					applyLocation(location);
+				}, error => {
+					console.error("RealtimeIRL location error:", error);
+				});
+				speedSubscription = client.addSpeedListener(speed => {
+					applySpeed(speed);
+				}, error => {
+					console.error("RealtimeIRL speed error:", error);
+				});
+				if (typeof client.addHeadingListener === "function") {
+					headingSubscription = client.addHeadingListener(heading => {
+						const value = toNumber(heading);
+						if (value !== null) { }
+					}, error => {
+						console.error("RealtimeIRL heading error:", error);
+					});
 				}
 			}
-
-
-
-			window.addEventListener(
-				"beforeunload",
+			window.addEventListener("beforeunload",
 				() => {
-
 					try {
-						locationSubscription
-							?.dispose?.();
+						locationSubscription?.dispose?.();
 					} catch (_) { }
-
 					try {
-						speedSubscription
-							?.dispose?.();
+						speedSubscription?.dispose?.();
 					} catch (_) { }
-
 					try {
-						headingSubscription
-							?.dispose?.();
+						headingSubscription?.dispose?.();
 					} catch (_) { }
-				}
-			);
-
-
-
+				});
 			initializeMap();
-
-
-			setTimeZone(
-				"pt-BR",
-				"fallback"
-			);
-
+			setTimeZone("pt-BR", "fallback");
 			connectToPullKey();
-
-
-
-			setInterval(
-				updateClock,
-				1000
-			);
-
+			setInterval(updateClock, 1000);
 		})();
 	</script>
-
 	<style>
 		@keyframes avatar-pulse {
 
@@ -1602,7 +832,6 @@
 			animation: avatar-pulse 3s ease-in-out infinite;
 		}
 	</style>
-
 </body>
 
 </html>
