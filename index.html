@@ -60,7 +60,6 @@
     bg-[#163561]
     animate-avatar-pulse
   "><img id="avatar" alt="" draggable="false" class="block h-full w-full object-cover"></div>
-			</div>
 			<div id="status" class="
           absolute
           left-2
@@ -100,8 +99,8 @@
           border-b
           border-white/10
           px-[13px]
-        "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-					class="size-6 mt-[-1px] h-4 w-4 shrink-0 text-cyan-400 drop-shadow-[0_0_7px_rgba(34,211,238,.8)]">
+        "><svg id="location-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+					class="size-6 mt-[-1px] h-4 w-4 shrink-0">
 					<path fill-rule="evenodd"
 						d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 0 0-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.145.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
 						clip-rule="evenodd" />
@@ -202,15 +201,20 @@
 			const pullKey = params.get("pullKey") || params.get("key") || "";
 			const mainColor = sanitizeColor(params.get("mainColor") || "#00eaff");
 			const bgColor = sanitizeColor(params.get("bgColor") || "#11131a");
+			const infoOpacity = clamp(parseFloat(params.get("opacity") ?? "0.96"), 0, 1);
 			const avatarURL = params.get("avatarURL") || "";
 			const avatarOpacity = clamp(parseFloat(params.get("avatarOpacity") ?? "1"), 0, 1);
+			const zoom = clamp(parseFloat(params.get("zoom") ?? "16"), 2, 22);
+			const pitch = clamp(parseFloat(params.get("pitch") ?? "0"), 0, 85);
 			const radar = document.getElementById("radar");
 			const infoCard = document.getElementById("info-card");
 			const avatar = document.getElementById("avatar");
+			const positionMarker = document.getElementById("position-marker");
 			const speedEl = document.getElementById("speed");
 			const clockEl = document.getElementById("clock");
 			const clockLabelEl = document.getElementById("clock-label");
 			const statusEl = document.getElementById("status");
+			const locationIcon = document.getElementById("location-icon");
 			const neighborhoodEl = document.getElementById("neighborhood");
 			const regionEl = document.getElementById("region");
 			const neighborhoodSkeleton = document.getElementById("neighborhood-skeleton");
@@ -221,8 +225,12 @@
         0 0 18px ${hexToRgba(mainColor, 0.7)},
         inset 0 0 10px rgba(0,0,0,.65)
       `;
-			infoCard.style.backgroundColor = hexToRgba(bgColor, 0.96);
+			infoCard.style.backgroundColor = hexToRgba(bgColor, infoOpacity);
 			speedEl.style.color = mainColor;
+			locationIcon.style.color = mainColor;
+			locationIcon.style.filter = `drop-shadow(0 0 7px ${hexToRgba(mainColor, 0.8)})`;
+
+			positionMarker.style.borderColor = mainColor;
 			statusEl.style.backgroundColor = mainColor;
 			statusEl.style.boxShadow = `0 0 7px ${mainColor}`;
 			avatar.style.opacity = String(avatarOpacity);
@@ -240,6 +248,7 @@
 			let map = null;
 			let data = null;
 			let markerReady = false;
+			let terrainReady = false;
 			let firstFixReceived = false;
 			let lastCoordinate = null;
 			let lastGeocodedCoordinate = null;
@@ -250,6 +259,11 @@
 			let streamerTimeZone = null;
 			let streamerTimeZoneSource = null;
 			let lastStreamerTimestamp = null;
+			let route3DLayer = null;
+			let route3DProgram = null;
+			let route3DPositionBuffer = null;
+			let route3DColorLocation = null;
+			let route3DMatrixLocation = null;
 			const defaultCenter = [0, 0];
 			const GEOCODE_DISTANCE_METERS = 100;
 			const GOOGLE_SATELLITE_TILES = ["https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"];
@@ -267,7 +281,10 @@
 			}
 
 			function sanitizeColor(value) {
-				const color = String(value || "").trim();
+				let color = String(value || "").trim();
+				if (/^[0-9a-fA-F]{3}$/.test(color) || /^[0-9a-fA-F]{6}$/.test(color) || /^[0-9a-fA-F]{8}$/.test(color)) {
+					color = `#${color}`;
+				}
 				if (/^#[0-9a-fA-F]{3,8}$/.test(color)) {
 					return color;
 				}
@@ -286,6 +303,18 @@
 				const g = parseInt(value.slice(2, 4), 16);
 				const b = parseInt(value.slice(4, 6), 16);
 				return `rgba(${r},${g},${b},${alpha})`;
+			}
+
+			function colorToRgb(color) {
+				let value = color.replace("#", "");
+				if (value.length === 3) {
+					value = value.split("").map(char => char + char).join("");
+				}
+				return [
+					parseInt(value.slice(0, 2), 16) / 255,
+					parseInt(value.slice(2, 4), 16) / 255,
+					parseInt(value.slice(4, 6), 16) / 255
+				];
 			}
 
 			function escapeXml(value) {
@@ -319,11 +348,7 @@ xmlns="http://www.w3.org/2000/svg"
         `;
 				return ("data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg));
 			}
-			/*
-			============================================================
-			DISTANCE
-			============================================================
-			*/
+
 			function metersBetween(a, b) {
 				const earthRadius = 6371008.8;
 				const p1 = a.latitude * Math.PI / 180;
@@ -333,11 +358,7 @@ xmlns="http://www.w3.org/2000/svg"
 				const h = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
 				return (2 * earthRadius * Math.asin(Math.sqrt(h)));
 			}
-			/*
-			============================================================
-			NORMALIZE RTIRL LOCATION
-			============================================================
-			*/
+
 			function normalizeLocation(location) {
 				if (!location) {
 					return null;
@@ -355,11 +376,7 @@ xmlns="http://www.w3.org/2000/svg"
 					longitude
 				};
 			}
-			/*
-			============================================================
-			TRY TO FIND A TIMESTAMP IN RTIRL DATA
-			============================================================
-			*/
+
 			function extractTimestamp(value) {
 				if (!value) {
 					return null;
@@ -389,15 +406,7 @@ xmlns="http://www.w3.org/2000/svg"
 				}
 				return null;
 			}
-			/*
-		============================================================
-		TRY TO FIND A TIMEZONE IN RTIRL DATA
-  
-		RTIRL's public listener API does not require a timezone field,
-		so this intentionally checks common possible metadata fields
-		without assuming they exist.
-		============================================================
-		*/
+
 			function extractTimeZone(value) {
 				if (!value) {
 					return null;
@@ -455,6 +464,7 @@ xmlns="http://www.w3.org/2000/svg"
 				} catch (_) { }
 				return "Local time";
 			}
+
 			const stateTimezones = {
 				"US-AL": "America/Chicago",
 				"US-AK": "America/Anchorage",
@@ -525,6 +535,7 @@ xmlns="http://www.w3.org/2000/svg"
 					hour12: false
 				}).format(new Date(timestamp));
 			}
+
 			async function reverseGeocode(latitude, longitude) {
 				const url = new URL("https://api.bigdatacloud.net/data/reverse-geocode-client");
 				url.searchParams.set("latitude", latitude);
@@ -577,10 +588,8 @@ xmlns="http://www.w3.org/2000/svg"
 			}
 
 			function showLocation(data) {
-				console.log(data);
 				const neighborhood = data.locality || data.neighbourhood || data.suburb || data.cityDistrict || "";
 				const city = data.city || data.town || data.village || "";
-				const country = data.countryName || "";
 				if (neighborhood) {
 					neighborhoodEl.textContent = neighborhood;
 					neighborhoodEl.classList.remove("hidden");
@@ -597,6 +606,7 @@ xmlns="http://www.w3.org/2000/svg"
 				}
 				clockLabelEl.textContent = data.principalSubdivision;
 			}
+
 			async function updateLocationDetails(location) {
 				if (geocodingInProgress) {
 					return;
@@ -624,6 +634,94 @@ xmlns="http://www.w3.org/2000/svg"
 				}
 			}
 
+			function create3DRouteLayer() {
+				if (pitch <= 0 || route3DLayer) {
+					return;
+				}
+				const vertexSource = `
+					attribute vec3 a_position;
+					uniform mat4 u_matrix;
+					void main() {
+						gl_Position = u_matrix * vec4(a_position, 1.0);
+					}
+				`;
+				const fragmentSource = `
+					precision mediump float;
+					uniform vec4 u_color;
+					void main() {
+						gl_FragColor = u_color;
+					}
+				`;
+				route3DLayer = {
+					id: "travel-route-3d",
+					type: "custom",
+					renderingMode: "3d",
+					onAdd: (mapInstance, gl) => {
+						const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+						gl.shaderSource(vertexShader, vertexSource);
+						gl.compileShader(vertexShader);
+						const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+						gl.shaderSource(fragmentShader, fragmentSource);
+						gl.compileShader(fragmentShader);
+						route3DProgram = gl.createProgram();
+						gl.attachShader(route3DProgram, vertexShader);
+						gl.attachShader(route3DProgram, fragmentShader);
+						gl.linkProgram(route3DProgram);
+						route3DPositionBuffer = gl.createBuffer();
+						route3DLayer.gl = gl;
+						route3DMatrixLocation = gl.getUniformLocation(route3DProgram, "u_matrix");
+						route3DColorLocation = gl.getUniformLocation(route3DProgram, "u_color");
+						route3DLayer.update = () => {
+							update3DRouteBuffer();
+							mapInstance.triggerRepaint();
+						};
+					},
+					render: (gl, matrix) => {
+						if (!routeCoordinates.length || !route3DPositionBuffer) {
+							return;
+						}
+						update3DRouteBuffer();
+						const rgb = colorToRgb(mainColor);
+						gl.useProgram(route3DProgram);
+						gl.uniformMatrix4fv(route3DMatrixLocation, false, matrix);
+						gl.uniform4f(route3DColorLocation, rgb[0], rgb[1], rgb[2], 0.95);
+						gl.bindBuffer(gl.ARRAY_BUFFER, route3DPositionBuffer);
+						const positionLocation = gl.getAttribLocation(route3DProgram, "a_position");
+						gl.enableVertexAttribArray(positionLocation);
+						gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+						gl.enable(gl.BLEND);
+						gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+						gl.drawArrays(gl.TRIANGLE_STRIP, 0, Math.max(0, routeCoordinates.length * 2));
+					}
+				};
+				map.addLayer(route3DLayer);
+			}
+
+			function update3DRouteBuffer() {
+				if (!map || !route3DLayer?.gl || !route3DPositionBuffer || routeCoordinates.length < 2) {
+					return;
+				}
+				const positions = [];
+				const widthMeters = 5;
+				for (let i = 0; i < routeCoordinates.length; i++) {
+					const coordinate = routeCoordinates[i];
+					const next = routeCoordinates[Math.min(i + 1, routeCoordinates.length - 1)];
+					const previous = routeCoordinates[Math.max(i - 1, 0)];
+					const dx = next[0] - previous[0];
+					const dy = next[1] - previous[1];
+					const length = Math.hypot(dx, dy) || 1;
+					const offsetLng = -dy / length * widthMeters / (111320 * Math.cos(coordinate[1] * Math.PI / 180));
+					const offsetLat = dx / length * widthMeters / 110540;
+					const elevation = map.queryTerrainElevation(coordinate) || 0.5;
+					const left = maplibregl.MercatorCoordinate.fromLngLat([coordinate[0] + offsetLng, coordinate[1] + offsetLat], elevation + 1);
+					const right = maplibregl.MercatorCoordinate.fromLngLat([coordinate[0] - offsetLng, coordinate[1] - offsetLat], elevation + 1);
+					positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+				}
+				const gl = route3DLayer.gl;
+				gl.bindBuffer(gl.ARRAY_BUFFER, route3DPositionBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.DYNAMIC_DRAW);
+			}
+
 			function initializeMap() {
 				if (typeof maplibregl === "undefined") {
 					console.error("MapLibre GL JS failed to load.");
@@ -639,6 +737,11 @@ xmlns="http://www.w3.org/2000/svg"
 								tiles: GOOGLE_SATELLITE_TILES,
 								tileSize: 256,
 								attribution: "Google"
+							},
+							"terrain-source": {
+								type: "raster-dem",
+								url: "https://tiles.mapterhorn.com/tilejson.json",
+								tileSize: 256
 							}
 						},
 						layers: [{
@@ -647,20 +750,29 @@ xmlns="http://www.w3.org/2000/svg"
 							source: "google-satellite",
 							minzoom: 0,
 							maxzoom: 22
-						}]
+						}],
+						terrain: {
+							source: "terrain-source",
+							exaggeration: 1
+						},
+						sky: {}
 					},
 					center: defaultCenter,
-					zoom: params.get("zoom") || 16,
-					pitch: params.get("pitch") || 0,
+					zoom,
+					pitch,
 					minZoom: 2,
 					maxZoom: 22,
+					maxPitch: 85,
 					attributionControl: false,
 					interactive: false,
 					preserveDrawingBuffer: true,
 					antialias: true
 				});
-				map.on("load",
-					() => {
+				map.on("load", () => {
+					terrainReady = true;
+					if (pitch > 0) {
+						create3DRouteLayer();
+					} else {
 						map.addSource("travel-route", {
 							type: "geojson",
 							data: {
@@ -701,13 +813,21 @@ xmlns="http://www.w3.org/2000/svg"
 								"line-opacity": 0.95
 							}
 						});
-						markerReady = true;
-						updateRouteSource();
-					});
+					}
+					markerReady = true;
+					updateRouteSource();
+				});
 			}
 
 			function updateRouteSource() {
-				if (!map || !markerReady || !map.getSource("travel-route")) {
+				if (!map || !markerReady) {
+					return;
+				}
+				if (pitch > 0) {
+					route3DLayer?.update?.();
+					return;
+				}
+				if (!map.getSource("travel-route")) {
 					return;
 				}
 				map.getSource("travel-route").setData({
@@ -741,7 +861,8 @@ xmlns="http://www.w3.org/2000/svg"
 					firstFixReceived = true;
 					map?.jumpTo({
 						center: coordinate,
-						zoom: 16
+						zoom,
+						pitch
 					});
 				} else {
 					map?.jumpTo({
@@ -797,18 +918,19 @@ xmlns="http://www.w3.org/2000/svg"
 					});
 				}
 			}
-			window.addEventListener("beforeunload",
-				() => {
-					try {
-						locationSubscription?.dispose?.();
-					} catch (_) { }
-					try {
-						speedSubscription?.dispose?.();
-					} catch (_) { }
-					try {
-						headingSubscription?.dispose?.();
-					} catch (_) { }
-				});
+
+			window.addEventListener("beforeunload", () => {
+				try {
+					locationSubscription?.dispose?.();
+				} catch (_) { }
+				try {
+					speedSubscription?.dispose?.();
+				} catch (_) { }
+				try {
+					headingSubscription?.dispose?.();
+				} catch (_) { }
+			});
+
 			initializeMap();
 			setTimeZone("pt-BR", "fallback");
 			connectToPullKey();
