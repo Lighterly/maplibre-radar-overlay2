@@ -860,12 +860,44 @@ xmlns="http://www.w3.org/2000/svg"
 			}
 
 			function applySpeed(speed) {
+				let displayedSpeed = null;
+				let speedAnimationFrame = null;
+
 				const numericSpeed = toNumber(speed);
 				if (numericSpeed === null) {
 					return;
 				}
-				const kmh = numericSpeed * 3.6;
-				speedEl.textContent = Math.max(0, Math.round(kmh));
+				const targetSpeed = Math.max(0, Math.round(numericSpeed * 3.6));
+				if (displayedSpeed === null) {
+					displayedSpeed = targetSpeed;
+					speedEl.textContent = targetSpeed;
+					return;
+				}
+				if (speedAnimationFrame) {
+					cancelAnimationFrame(speedAnimationFrame);
+				}
+				const startSpeed = displayedSpeed;
+				const difference = targetSpeed - startSpeed;
+				const duration = 350;
+				const startTime = performance.now();
+
+				function animateSpeed(timestamp) {
+					const progress = Math.min(1, (timestamp - startTime) / duration);
+					const eased = 1 - Math.pow(1 - progress, 3);
+					const value = Math.round(startSpeed + difference * eased);
+					displayedSpeed = value;
+					speedEl.textContent = value;
+
+					if (progress < 1) {
+						speedAnimationFrame = requestAnimationFrame(animateSpeed);
+					} else {
+						speedAnimationFrame = null;
+						displayedSpeed = targetSpeed;
+						speedEl.textContent = targetSpeed;
+					}
+				}
+
+				speedAnimationFrame = requestAnimationFrame(animateSpeed);
 			}
 
 			function applyHeading(heading) {
@@ -926,6 +958,7 @@ xmlns="http://www.w3.org/2000/svg"
 	</script>
 	<style>
 		@keyframes avatar-pulse {
+
 			0%,
 			100% {
 				opacity: 0.9;
