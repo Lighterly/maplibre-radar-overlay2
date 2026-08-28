@@ -204,6 +204,8 @@
 			const radarBg = sanitizeRadarBg(params.get("radarBg") || "#080b0d");
 			const infoOpacity = clamp(parseFloat(params.get("opacity") ?? "0.96"), 0, 1);
 			const clockSize = clamp(parseFloat(params.get("clockSize") ?? "14"), 1, 100);
+			const routeAnimation = params.get("routeAnimation") !== "0";
+			const routeAnimationDuration = clamp(parseFloat(params.get("routeAnimationDuration") ?? "1000"), 0, 10000);
 			const avatarURL = params.get("avatarURL") || "";
 			const avatarOpacity = clamp(parseFloat(params.get("avatarOpacity") ?? "1"), 0, 1);
 			const zoom = clamp(parseFloat(params.get("zoom") ?? "16"), 2, 22);
@@ -249,6 +251,7 @@
 				once: true
 			});
 			const routeCoordinates = [];
+			let routeAnimationFrame = null;
 			let map = null;
 			let data = null;
 			let markerReady = false;
@@ -754,6 +757,46 @@ xmlns="http://www.w3.org/2000/svg"
 				});
 			}
 
+			function animateRouteSegment(from, to) {
+				if (!routeAnimation || routeAnimationDuration <= 0 || !map || !markerReady) {
+					updateRouteSource();
+					return;
+				}
+
+				if (routeAnimationFrame) {
+					cancelAnimationFrame(routeAnimationFrame);
+				}
+
+				const startTime = performance.now();
+				const originalLast = routeCoordinates[routeCoordinates.length - 1];
+
+				if (!originalLast || originalLast[0] !== from[0] || originalLast[1] !== from[1]) {
+					updateRouteSource();
+					return;
+				}
+
+				const animate = now => {
+					const progress = clamp((now - startTime) / routeAnimationDuration, 0, 1);
+					const eased = 1 - Math.pow(1 - progress, 3);
+
+					const longitude = from[0] + (to[0] - from[0]) * eased;
+					const latitude = from[1] + (to[1] - from[1]) * eased;
+
+					routeCoordinates[routeCoordinates.length - 1] = [longitude, latitude];
+					updateRouteSource();
+
+					if (progress < 1) {
+						routeAnimationFrame = requestAnimationFrame(animate);
+					} else {
+						routeCoordinates[routeCoordinates.length - 1] = to;
+						routeAnimationFrame = null;
+						updateRouteSource();
+					}
+				};
+
+				routeAnimationFrame = requestAnimationFrame(animate);
+			}
+
 			function updateRouteSource() {
 				if (!map || !markerReady || !map.getSource("travel-route")) {
 					return;
@@ -799,14 +842,16 @@ xmlns="http://www.w3.org/2000/svg"
 					});
 				}
 				if (!lastCoordinate || metersBetween(lastCoordinate, location) >= 2) {
-					const movementDistance = lastCoordinate ? metersBetween(lastCoordinate, location) : 0;
-					const movementBearing = lastCoordinate && movementDistance >= MIN_BEARING_DISTANCE_METERS ? calculateBearing(lastCoordinate, location) : null;
+					const previousCoordinate = routeCoordinates.at(-1);
 					routeCoordinates.push(coordinate);
-					if (movementBearing !== null && lastHeading === null) {
-						updateMapBearing(movementBearing);
-					}
 					lastCoordinate = location;
-					updateRouteSource();
+
+					if (previousCoordinate && routeAnimation) {
+						routeCoordinates[routeCoordinates.length - 1] = previousCoordinate;
+						animateRouteSegment(previousCoordinate, coordinate);
+					} else {
+						updateRouteSource();
+					}
 				}
 				statusEl.classList.remove("opacity-0");
 				statusEl.classList.add("opacity-100");
