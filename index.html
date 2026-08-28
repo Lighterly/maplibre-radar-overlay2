@@ -201,7 +201,9 @@
 			const pullKey = params.get("pullKey") || params.get("key") || "";
 			const mainColor = sanitizeColor(params.get("mainColor") || "#00eaff");
 			const bgColor = sanitizeColor(params.get("bgColor") || "#11131a");
+			const radarBg = sanitizeRadarBg(params.get("radarBg") || "#080b0d");
 			const infoOpacity = clamp(parseFloat(params.get("opacity") ?? "0.96"), 0, 1);
+			const clockSize = clamp(parseFloat(params.get("clockSize") ?? "14"), 1, 100);
 			const avatarURL = params.get("avatarURL") || "";
 			const avatarOpacity = clamp(parseFloat(params.get("avatarOpacity") ?? "1"), 0, 1);
 			const zoom = clamp(parseFloat(params.get("zoom") ?? "16"), 2, 22);
@@ -220,6 +222,8 @@
 			const regionEl = document.getElementById("region");
 			const neighborhoodSkeleton = document.getElementById("neighborhood-skeleton");
 			const regionSkeleton = document.getElementById("region-skeleton");
+			radar.style.backgroundColor = radarBg;
+			clockEl.style.fontSize = `${clockSize}px`;
 			radar.style.borderColor = mainColor;
 			radar.style.boxShadow = `
         0 0 7px ${mainColor},
@@ -287,6 +291,14 @@
 					return color;
 				}
 				return "#00eaff";
+			}
+
+			function sanitizeRadarBg(value) {
+				const color = String(value || "").trim();
+				if (color.toLowerCase() === "transparent") {
+					return "transparent";
+				}
+				return sanitizeColor(color);
 			}
 
 			function hexToRgba(hex, alpha) {
@@ -869,7 +881,6 @@ xmlns="http://www.w3.org/2000/svg"
 	</script>
 	<style>
 		@keyframes avatar-pulse {
-
 			0%,
 			100% {
 				opacity: 0.9;
