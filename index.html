@@ -267,6 +267,8 @@
 			let lastStreamerTimestamp = null;
 			let lastHeading = null;
 			let currentBearing = 0;
+			let displayedSpeed = null;
+			let speedAnimationFrame = null;
 			const defaultCenter = [0, 0];
 			const GEOCODE_DISTANCE_METERS = 100;
 			const MIN_BEARING_DISTANCE_METERS = 5;
@@ -691,7 +693,7 @@ xmlns="http://www.w3.org/2000/svg"
 					},
 					paint: {
 						"line-color": mainColor,
-						"line-width": 15,
+						"line-width": 10,
 						"line-opacity": 0.2,
 						"line-blur": 2.5
 					}
@@ -860,31 +862,58 @@ xmlns="http://www.w3.org/2000/svg"
 			}
 
 			function applySpeed(speed) {
-				let displayedSpeed = null;
-				let speedAnimationFrame = null;
-
 				const numericSpeed = toNumber(speed);
+
 				if (numericSpeed === null) {
 					return;
 				}
+
 				const targetSpeed = Math.max(0, Math.round(numericSpeed * 3.6));
+
 				if (displayedSpeed === null) {
 					displayedSpeed = targetSpeed;
 					speedEl.textContent = targetSpeed;
 					return;
 				}
+
+				if (targetSpeed === displayedSpeed) {
+					return;
+				}
+
 				if (speedAnimationFrame) {
 					cancelAnimationFrame(speedAnimationFrame);
+					speedAnimationFrame = null;
 				}
+
 				const startSpeed = displayedSpeed;
 				const difference = targetSpeed - startSpeed;
-				const duration = 350;
+
+				const duration = clamp(
+					parseFloat(params.get("speedAnimationDuration") ?? "500"),
+					0,
+					10000
+				);
+
+				if (duration <= 0) {
+					displayedSpeed = targetSpeed;
+					speedEl.textContent = targetSpeed;
+					return;
+				}
+
 				const startTime = performance.now();
 
 				function animateSpeed(timestamp) {
-					const progress = Math.min(1, (timestamp - startTime) / duration);
+					const progress = Math.min(
+						1,
+						(timestamp - startTime) / duration
+					);
+
 					const eased = 1 - Math.pow(1 - progress, 3);
-					const value = Math.round(startSpeed + difference * eased);
+
+					const value = Math.round(
+						startSpeed + difference * eased
+					);
+
 					displayedSpeed = value;
 					speedEl.textContent = value;
 
