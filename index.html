@@ -155,20 +155,26 @@
               tracking-[.45px]
               text-white/40
             "> Velocidade </div>
-					<div class="flex items-baseline gap-[3px]"><span id="speed" class="
-                text-[16px]
-                font-black
-                leading-[17px]
-                tracking-[-.2px]
-                text-cyan-400
-              "> -- </span><span class="
+					<div class="flex items-baseline gap-[3px]">
+						<div id="speed" class="
+  flex
+  h-[17px]
+  items-center
+  overflow-hidden
+  text-[16px]
+  font-black
+  leading-[17px]
+  tracking-[-.2px]
+  text-cyan-400
+">--</div><span class="
                 text-[7px]
                 font-extrabold
                 uppercase
                 leading-2
                 tracking-[.3px]
                 text-white/40
-              "> km/h </span></div>
+              "> km/h </span>
+					</div>
 				</div>
 				<div class="mt-px text-right">
 					<div id="clock-label" class="
@@ -268,7 +274,8 @@
 			let lastHeading = null;
 			let currentBearing = 0;
 			let displayedSpeed = null;
-			let speedAnimationFrame = null;
+			let speedAnimationTimer = null;
+			const SPEED_DIGIT_HEIGHT = 17;
 			const defaultCenter = [0, 0];
 			const GEOCODE_DISTANCE_METERS = 100;
 			const MIN_BEARING_DISTANCE_METERS = 5;
@@ -501,7 +508,6 @@ xmlns="http://www.w3.org/2000/svg"
 				} catch (_) { }
 				return "Local time";
 			}
-
 			const stateTimezones = {
 				"US-AL": "America/Chicago",
 				"US-AK": "America/Anchorage",
@@ -572,7 +578,6 @@ xmlns="http://www.w3.org/2000/svg"
 					hour12: false
 				}).format(new Date(timestamp));
 			}
-
 			async function reverseGeocode(latitude, longitude) {
 				const url = new URL("https://api.bigdatacloud.net/data/reverse-geocode-client");
 				url.searchParams.set("latitude", latitude);
@@ -643,7 +648,6 @@ xmlns="http://www.w3.org/2000/svg"
 				}
 				clockLabelEl.textContent = data.principalSubdivision;
 			}
-
 			async function updateLocationDetails(location) {
 				if (geocodingInProgress) {
 					return;
@@ -764,29 +768,22 @@ xmlns="http://www.w3.org/2000/svg"
 					updateRouteSource();
 					return;
 				}
-
 				if (routeAnimationFrame) {
 					cancelAnimationFrame(routeAnimationFrame);
 				}
-
 				const startTime = performance.now();
 				const originalLast = routeCoordinates[routeCoordinates.length - 1];
-
 				if (!originalLast || originalLast[0] !== from[0] || originalLast[1] !== from[1]) {
 					updateRouteSource();
 					return;
 				}
-
 				const animate = now => {
 					const progress = clamp((now - startTime) / routeAnimationDuration, 0, 1);
 					const eased = 1 - Math.pow(1 - progress, 3);
-
 					const longitude = from[0] + (to[0] - from[0]) * eased;
 					const latitude = from[1] + (to[1] - from[1]) * eased;
-
 					routeCoordinates[routeCoordinates.length - 1] = [longitude, latitude];
 					updateRouteSource();
-
 					if (progress < 1) {
 						routeAnimationFrame = requestAnimationFrame(animate);
 					} else {
@@ -795,7 +792,6 @@ xmlns="http://www.w3.org/2000/svg"
 						updateRouteSource();
 					}
 				};
-
 				routeAnimationFrame = requestAnimationFrame(animate);
 			}
 
@@ -847,7 +843,6 @@ xmlns="http://www.w3.org/2000/svg"
 					const previousCoordinate = routeCoordinates.at(-1);
 					routeCoordinates.push(coordinate);
 					lastCoordinate = location;
-
 					if (previousCoordinate && routeAnimation) {
 						routeCoordinates[routeCoordinates.length - 1] = previousCoordinate;
 						animateRouteSegment(previousCoordinate, coordinate);
@@ -861,73 +856,132 @@ xmlns="http://www.w3.org/2000/svg"
 				updateClock();
 			}
 
+			function createSpeedDigit(digit) {
+				const wrapper = document.createElement("span");
+				wrapper.className = "speed-digit";
+				wrapper.dataset.value = digit;
+				const track = document.createElement("span");
+				track.className = "speed-digit-track";
+				for (let i = 0; i < 30; i++) {
+					const number = document.createElement("span");
+					number.textContent = i % 10;
+					number.className = "speed-digit-number";
+					track.appendChild(number);
+				}
+				wrapper.appendChild(track);
+				track.style.transform = `translateY(-${digit * SPEED_DIGIT_HEIGHT}px)`;
+				return wrapper;
+			}
+
+			function renderSpeedImmediately(value) {
+				speedEl.innerHTML = "";
+				const digits = String(value).split("");
+				for (const digit of digits) {
+					speedEl.appendChild(createSpeedDigit(Number(digit)));
+				}
+			}
+
+			function getShortestDigitDelta(from, to) {
+				let delta = to - from;
+				if (delta > 5) {
+					delta -= 10;
+				} else if (delta < -5) {
+					delta += 10;
+				}
+				return delta;
+			}
+
+			function animateSpeedTo(target) {
+				if (speedAnimationTimer) {
+					clearTimeout(speedAnimationTimer);
+					speedAnimationTimer = null;
+				}
+				const fromDigits = String(displayedSpeed).split("");
+				const toDigits = String(target).split("");
+				if (toDigits.length > fromDigits.length) {
+					const difference = toDigits.length - fromDigits.length;
+					for (let i = 0; i < difference; i++) {
+						const digitIndex = i;
+						const digit = Number(toDigits[digitIndex]);
+						const newDigit = createSpeedDigit(digit);
+						newDigit.classList.add("speed-digit-new");
+						speedEl.insertBefore(newDigit, speedEl.firstChild);
+						requestAnimationFrame(() => {
+							newDigit.classList.add("visible");
+						});
+					}
+				} else if (toDigits.length < fromDigits.length) {
+					const difference = fromDigits.length - toDigits.length;
+					for (let i = 0; i < difference; i++) {
+						const digit = speedEl.firstElementChild;
+						if (digit) {
+							digit.classList.add("speed-digit-removing");
+							setTimeout(() => {
+								digit.remove();
+							}, 180);
+						}
+					}
+				}
+				requestAnimationFrame(() => {
+					const duration = clamp(parseFloat(params.get("speedAnimationDuration") ?? "500"), 50, 10000);
+					const wheels = speedEl.querySelectorAll(".speed-digit");
+					const currentDigits = String(displayedSpeed).padStart(toDigits.length, " ");
+					wheels.forEach((wheel, index) => {
+						const track = wheel.querySelector(".speed-digit-track");
+						const currentChar = currentDigits[index];
+						const fromDigit = Number.isFinite(Number(currentChar)) ? Number(currentChar) : 0;
+						const targetDigit = Number(toDigits[index]);
+						const delta = getShortestDigitDelta(fromDigit, targetDigit);
+						const baseIndex = 10 + fromDigit;
+						const targetIndex = baseIndex + delta;
+						track.style.transition = "none";
+						track.style.transform = `translateY(-${baseIndex * SPEED_DIGIT_HEIGHT}px)`;
+						void track.offsetHeight;
+						track.style.transition = `transform ${duration}ms cubic-bezier(.22,.61,.36,1)`;
+						track.style.transform = `translateY(-${targetIndex * SPEED_DIGIT_HEIGHT}px)`;
+						wheel.classList.add("visible");
+					});
+					displayedSpeed = target;
+					speedAnimationTimer = setTimeout(() => {
+						speedAnimationTimer = null;
+						const finalWheels = speedEl.querySelectorAll(".speed-digit");
+						finalWheels.forEach((wheel, index) => {
+							const track = wheel.querySelector(".speed-digit-track");
+							const digit = Number(toDigits[index]);
+							track.style.transition = "none";
+							track.style.transform = `translateY(-${digit * SPEED_DIGIT_HEIGHT}px)`;
+						});
+					}, duration);
+				});
+			}
+
 			function applySpeed(speed) {
 				const numericSpeed = toNumber(speed);
-
 				if (numericSpeed === null) {
 					return;
 				}
-
 				const targetSpeed = Math.max(0, Math.round(numericSpeed * 3.6));
-
 				if (displayedSpeed === null) {
 					displayedSpeed = targetSpeed;
-					speedEl.textContent = targetSpeed;
+					renderSpeedImmediately(targetSpeed);
 					return;
 				}
-
 				if (targetSpeed === displayedSpeed) {
 					return;
 				}
+				animateSpeedTo(targetSpeed);
+			}
 
-				if (speedAnimationFrame) {
-					cancelAnimationFrame(speedAnimationFrame);
-					speedAnimationFrame = null;
-				}
-
-				const startSpeed = displayedSpeed;
-				const difference = targetSpeed - startSpeed;
-
-				const duration = clamp(
-					parseFloat(params.get("speedAnimationDuration") ?? "500"),
-					0,
-					10000
-				);
-
-				if (duration <= 0) {
-					displayedSpeed = targetSpeed;
-					speedEl.textContent = targetSpeed;
+			function debugSpeed(value) {
+				const target = Number(value);
+				if (!Number.isFinite(target) || target < 0) {
+					console.warn("debugSpeed(value): value must be a number >= 0");
 					return;
 				}
-
-				const startTime = performance.now();
-
-				function animateSpeed(timestamp) {
-					const progress = Math.min(
-						1,
-						(timestamp - startTime) / duration
-					);
-
-					const eased = 1 - Math.pow(1 - progress, 3);
-
-					const value = Math.round(
-						startSpeed + difference * eased
-					);
-
-					displayedSpeed = value;
-					speedEl.textContent = value;
-
-					if (progress < 1) {
-						speedAnimationFrame = requestAnimationFrame(animateSpeed);
-					} else {
-						speedAnimationFrame = null;
-						displayedSpeed = targetSpeed;
-						speedEl.textContent = targetSpeed;
-					}
-				}
-
-				speedAnimationFrame = requestAnimationFrame(animateSpeed);
+				console.log(`Speed: ${displayedSpeed ?? "--"} → ${target} km/h`);
+				applySpeed(target / 3.6);
 			}
+			window.debugSpeed = debugSpeed;
 
 			function applyHeading(heading) {
 				const value = toNumber(heading);
@@ -966,7 +1020,6 @@ xmlns="http://www.w3.org/2000/svg"
 					});
 				}
 			}
-
 			window.addEventListener("beforeunload", () => {
 				try {
 					locationSubscription?.dispose?.();
@@ -978,7 +1031,6 @@ xmlns="http://www.w3.org/2000/svg"
 					headingSubscription?.dispose?.();
 				} catch (_) { }
 			});
-
 			initializeMap();
 			setTimeZone("pt-BR", "fallback");
 			connectToPullKey();
@@ -1000,6 +1052,60 @@ xmlns="http://www.w3.org/2000/svg"
 
 		.animate-avatar-pulse {
 			animation: avatar-pulse 3s ease-in-out infinite;
+		}
+
+		#speed {
+			display: flex;
+			align-items: center;
+			white-space: nowrap;
+		}
+
+		.speed-digit {
+			position: relative;
+			display: block;
+			width: 9px;
+			height: 17px;
+			overflow: hidden;
+			flex: 0 0 9px;
+		}
+
+		.speed-digit-track {
+			position: absolute;
+			left: 0;
+			top: 0;
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+			will-change: transform;
+		}
+
+		.speed-digit-number {
+			display: block;
+			width: 100%;
+			height: 17px;
+			line-height: 17px;
+			text-align: center;
+		}
+
+		.speed-digit-new {
+			opacity: 0;
+			transform: translateY(3px);
+			transition:
+				opacity 150ms ease,
+				transform 150ms ease;
+		}
+
+		.speed-digit-new.visible {
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		.speed-digit-removing {
+			opacity: 0;
+			transform: translateY(-3px);
+			transition:
+				opacity 180ms ease,
+				transform 180ms ease;
 		}
 	</style>
 </body>
