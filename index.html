@@ -5,258 +5,581 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>RealtimeIRL Radar</title>
+
 	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@rtirl/api@1.2.5/lib/index.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/kichat.js/dist/kichat.js.browser-global.min.js"></script>
 </head>
 
 <body class="m-0 h-screen w-screen overflow-hidden bg-transparent font-sans">
+
 	<main id="widget" aria-label="RealtimeIRL radar overlay"
 		class="relative h-[261px] w-[261px] overflow-hidden bg-transparent select-none">
+
 		<section id="radar" class="
-        absolute
-        left-6
-        top-[22px]
-        z-10
-        h-[150px]
-        w-[150px]
-        overflow-hidden
-        rounded-full
-        border-[3px]
-        border-cyan-400
-        bg-[#080b0d]
-        shadow-[0_0_7px_rgba(34,211,238,1),0_0_18px_rgba(34,211,238,.7),inset_0_0_10px_rgba(0,0,0,.65)]
-      ">
+			absolute
+			left-6
+			top-[22px]
+			z-10
+			h-[150px]
+			w-[150px]
+			overflow-hidden
+			rounded-full
+			border-[3px]
+			border-cyan-400
+			bg-[#080b0d]
+			shadow-[0_0_7px_rgba(34,211,238,1),0_0_18px_rgba(34,211,238,.7),inset_0_0_10px_rgba(0,0,0,.65)]
+		">
 			<div id="map" class="absolute inset-0 h-full w-full"></div>
+
 			<div class="
-          pointer-events-none
-          absolute
-          inset-0
-          z-10
-          rounded-full
-          shadow-[inset_0_0_10px_rgba(0,0,0,.75)]
-        "></div>
+				pointer-events-none
+				absolute
+				inset-0
+				z-10
+				rounded-full
+				shadow-[inset_0_0_10px_rgba(0,0,0,.75)]
+			"></div>
+
 			<div class="
-          pointer-events-none
-          absolute
-          inset-0
-          z-20
-          rounded-full
-          shadow-[inset_0_0_9px_rgba(0,0,0,.65)]
-        "></div>
+				pointer-events-none
+				absolute
+				inset-0
+				z-20
+				rounded-full
+				shadow-[inset_0_0_9px_rgba(0,0,0,.65)]
+			"></div>
+
 			<div id="position-marker" class="
-    absolute
-    left-1/2
-    top-1/2
-    z-30
-    h-[30px]
-    w-[30px]
-    -translate-x-1/2
-    -translate-y-1/2
-    overflow-hidden
-    rounded-full
-    border-2
-    border-cyan-400
-    bg-[#163561]
-    animate-avatar-pulse
-  "><img id="avatar" alt="" draggable="false" class="block h-full w-full object-cover"></div>
+				absolute
+				left-1/2
+				top-1/2
+				z-30
+				h-[30px]
+				w-[30px]
+				-translate-x-1/2
+				-translate-y-1/2
+				overflow-hidden
+				rounded-full
+				border-2
+				border-cyan-400
+				bg-[#163561]
+				animate-avatar-pulse
+			">
+				<img id="avatar" alt="" draggable="false" class="block h-full w-full object-cover">
+			</div>
+
 			<div id="status" class="
-          absolute
-          left-2
-          top-2
-          z-40
-          h-2
-          w-2
-          rounded-full
-          bg-cyan-400
-          opacity-0
-          shadow-[0_0_7px_rgba(34,211,238,1)]
-          transition-opacity
-          duration-200
-        "></div>
+				absolute
+				left-2
+				top-2
+				z-40
+				h-2
+				w-2
+				rounded-full
+				bg-cyan-400
+				opacity-0
+				shadow-[0_0_7px_rgba(34,211,238,1)]
+				transition-opacity
+				duration-200
+			"></div>
 		</section>
+
 		<section id="info-card" class="
-        absolute
-        bottom-0
-        left-[15px]
-        z-50
-        h-[80px]
-        w-[176px]
-        overflow-hidden
-        rounded-[14px]
-        border
-        border-white/5
-        bg-[#11131a]/95
-        text-white
-        shadow-[0_8px_24px_rgba(0,0,0,.32)]
-        backdrop-blur-xl
-      ">
+			absolute
+			bottom-0
+			left-[15px]
+			z-50
+			h-[80px]
+			w-[176px]
+			overflow-hidden
+			rounded-[14px]
+			border
+			border-white/5
+			bg-[#11131a]/95
+			text-white
+			shadow-[0_8px_24px_rgba(0,0,0,.32)]
+			backdrop-blur-xl
+		">
+
 			<div class="
-          flex
-          h-[41px]
-          items-center
-          gap-2
-          border-b
-          border-white/10
-          px-[13px]
-        "><svg id="location-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+				flex
+				h-[41px]
+				items-center
+				gap-2
+				border-b
+				border-white/10
+				px-[13px]
+			">
+				<svg id="location-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
 					class="size-6 mt-[-1px] h-4 w-4 shrink-0">
 					<path fill-rule="evenodd"
 						d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 0 0-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.145.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
 						clip-rule="evenodd" />
 				</svg>
+
 				<div class="min-w-0 flex-1">
 					<div id="neighborhood-skeleton" class="
-              h-3
-              w-20
-              animate-pulse
-              rounded
-              bg-white/10
-            "></div>
+						h-3
+						w-20
+						animate-pulse
+						rounded
+						bg-white/10
+					"></div>
+
 					<div id="neighborhood" class="
-              hidden
-              truncate
-              text-[11px]
-              font-bold
-              leading-3
-              text-white
-            "></div>
+						hidden
+						truncate
+						text-[11px]
+						font-bold
+						leading-3
+						text-white
+					"></div>
+
 					<div id="region-skeleton" class="
-              mt-1
-              h-2.5
-              w-28
-              animate-pulse
-              rounded
-              bg-white/5
-            "></div>
+						mt-1
+						h-2.5
+						w-28
+						animate-pulse
+						rounded
+						bg-white/5
+					"></div>
+
 					<div id="region" class="
-              hidden
-              truncate
-              text-[9px]
-              font-semibold
-              leading-2.5
-              text-white/40
-            "></div>
+						hidden
+						truncate
+						text-[9px]
+						font-semibold
+						leading-2.5
+						text-white/40
+					"></div>
 				</div>
 			</div>
+
 			<div class="
-          flex
-          h-[38px]
-          items-center
-          justify-between
-          px-3
-        ">
-				<div class="flex flex-col justify-center">
-					<div class="
-              text-[7px]
-              font-extrabold
-              uppercase
-              leading-[8px]
-              tracking-[.45px]
-              text-white/40
-            "> Velocidade </div>
+				flex
+				h-[38px]
+				items-center
+				justify-between
+				px-3
+			">
+
+				<!-- SPEED -->
+				<div id="speed-container" class="flex flex-col justify-center">
+
+					<div id="speed-label" class="
+							text-[7px]
+							font-extrabold
+							uppercase
+							leading-[8px]
+							tracking-[.45px]
+							text-white/40
+						">
+						Speed
+					</div>
+
 					<div class="flex items-baseline gap-[3px]">
 						<div id="speed" class="
-  flex
-  h-[17px]
-  items-center
-  overflow-hidden
-  text-[16px]
-  font-black
-  leading-[17px]
-  tracking-[-.2px]
-  text-cyan-400
-">--</div><span class="
-                text-[7px]
-                font-extrabold
-                uppercase
-                leading-2
-                tracking-[.3px]
-                text-white/40
-              "> km/h </span>
+							flex
+							h-[17px]
+							items-center
+							overflow-hidden
+							text-[16px]
+							font-black
+							leading-[17px]
+							tracking-[-.2px]
+							text-cyan-400
+						">--</div>
+
+						<span class="
+							text-[7px]
+							font-extrabold
+							uppercase
+							leading-2
+							tracking-[.3px]
+							text-white/40
+						">
+							km/h
+						</span>
 					</div>
 				</div>
+
+				<!-- TEMPERATURE -->
+				<div id="temperature-container" class="hidden flex-col justify-center">
+
+					<div id="temperature-label" class="
+							text-[7px]
+							font-extrabold
+							uppercase
+							leading-[8px]
+							tracking-[.45px]
+							text-white/40
+						">
+						Temperature
+					</div>
+
+					<div class="flex items-baseline gap-[3px]">
+						<div id="temperature" class="
+							text-[16px]
+							font-black
+							leading-[17px]
+							tracking-[-.2px]
+							text-cyan-400
+						">--</div>
+
+						<span class="
+							text-[7px]
+							font-extrabold
+							uppercase
+							leading-2
+							tracking-[.3px]
+							text-white/40
+						">
+							°C
+						</span>
+					</div>
+				</div>
+
 				<div class="mt-px text-right">
 					<div id="clock-label" class="
-              max-w-[85px]
-              truncate
-              text-[7px]
-              font-extrabold
-              uppercase
-              leading-2
-              tracking-[.45px]
-              text-white/40
-            "> Carregando... </div>
+						max-w-[85px]
+						truncate
+						text-[7px]
+						font-extrabold
+						uppercase
+						leading-2
+						tracking-[.45px]
+						text-white/40
+					">
+						Carregando...
+					</div>
+
 					<div id="clock" class="
-              mt-px
-              text-[14px]
-              font-extrabold
-              leading-3
-              tracking-[.2px]
-              text-white/90
-              tabular-nums
-            "> --:--:-- </div>
+						mt-px
+						text-[14px]
+						font-extrabold
+						leading-3
+						tracking-[.2px]
+						text-white/90
+						tabular-nums
+					">
+						--:--:--
+					</div>
 				</div>
+
 			</div>
 		</section>
 	</main>
+
 	<script>
 		(() => {
 			"use strict";
+
 			const params = new URLSearchParams(window.location.search);
-			const pullKey = params.get("pullKey") || params.get("key") || "";
-			const mainColor = sanitizeColor(params.get("mainColor") || "#00eaff");
-			const bgColor = sanitizeColor(params.get("bgColor") || "#11131a");
-			const radarBg = sanitizeRadarBg(params.get("radarBg") || "#080b0d");
-			const infoOpacity = clamp(parseFloat(params.get("opacity") ?? "0.96"), 0, 1);
-			const clockSize = clamp(parseFloat(params.get("clockSize") ?? "14"), 1, 100);
-			const routeAnimation = params.get("routeAnimation") !== "0";
-			const routeAnimationDuration = clamp(parseFloat(params.get("routeAnimationDuration") ?? "1000"), 0, 10000);
-			const avatarURL = params.get("avatarURL") || "";
-			const avatarOpacity = clamp(parseFloat(params.get("avatarOpacity") ?? "1"), 0, 1);
-			const zoom = clamp(parseFloat(params.get("zoom") ?? "16"), 2, 22);
-			const pitch = clamp(parseFloat(params.get("pitch") ?? "0"), 0, 85);
-			const followBearing = params.get("followBearing") !== "0";
-			const radar = document.getElementById("radar");
-			const infoCard = document.getElementById("info-card");
-			const avatar = document.getElementById("avatar");
-			const positionMarker = document.getElementById("position-marker");
-			const speedEl = document.getElementById("speed");
-			const clockEl = document.getElementById("clock");
-			const clockLabelEl = document.getElementById("clock-label");
-			const statusEl = document.getElementById("status");
-			const locationIcon = document.getElementById("location-icon");
-			const neighborhoodEl = document.getElementById("neighborhood");
-			const regionEl = document.getElementById("region");
-			const neighborhoodSkeleton = document.getElementById("neighborhood-skeleton");
-			const regionSkeleton = document.getElementById("region-skeleton");
+
+			function getBooleanParam(name, defaultValue) {
+				const value = params.get(name);
+
+				if (value === null) {
+					return defaultValue;
+				}
+
+				const normalized = value.trim().toLowerCase();
+
+				if (
+					normalized === "1" ||
+					normalized === "true"
+				) {
+					return true;
+				}
+
+				if (
+					normalized === "0" ||
+					normalized === "false"
+				) {
+					return false;
+				}
+
+				return defaultValue;
+			}
+
+			const pullKey =
+				params.get("pullKey") ||
+				params.get("key") ||
+				"";
+
+			const mainColor =
+				sanitizeColor(
+					params.get("mainColor") ||
+					"#00eaff"
+				);
+
+			const bgColor =
+				sanitizeColor(
+					params.get("bgColor") ||
+					"#11131a"
+				);
+
+			const radarBg =
+				sanitizeRadarBg(
+					params.get("radarBg") ||
+					"#080b0d"
+				);
+
+			const infoOpacity =
+				clamp(
+					parseFloat(
+						params.get("opacity") ?? "0.96"
+					),
+					0,
+					1
+				);
+
+			const clockSize =
+				clamp(
+					parseFloat(
+						params.get("clockSize") ?? "14"
+					),
+					1,
+					100
+				);
+
+			const routeAnimation =
+				getBooleanParam(
+					"routeAnimation",
+					true
+				);
+
+			const routeAnimationDuration =
+				clamp(
+					parseFloat(
+						params.get("routeAnimationDuration") ?? "1000"
+					),
+					0,
+					10000
+				);
+
+			const speedAnimation =
+				getBooleanParam(
+					"speedAnimation",
+					false
+				);
+
+			const avatarURL =
+				params.get("avatarURL") || "";
+
+			const avatarOpacity =
+				clamp(
+					parseFloat(
+						params.get("avatarOpacity") ?? "1"
+					),
+					0,
+					1
+				);
+
+			const zoom =
+				clamp(
+					parseFloat(
+						params.get("zoom") ?? "16"
+					),
+					2,
+					22
+				);
+
+			const pitch =
+				clamp(
+					parseFloat(
+						params.get("pitch") ?? "0"
+					),
+					0,
+					85
+				);
+
+			const followBearing =
+				getBooleanParam(
+					"followBearing",
+					true
+				);
+
+			let showRadar =
+				getBooleanParam(
+					"showRadar",
+					true
+				);
+
+			const speedAnimationDuration =
+				clamp(
+					parseFloat(
+						params.get("speedAnimationDuration") ?? "500"
+					),
+					50,
+					10000
+				);
+
+			const speedLabel =
+				params.get("speedLabel") ||
+				"Speed";
+
+			const temperatureLabel =
+				params.get("temperatureLabel") ||
+				"Temperature";
+
+			const kickChannelParam =
+				params.get("kickChannel") || "";
+
+			const CHANNEL =
+				kickChannelParam.replace(/_/g, "-");
+
+			const radar =
+				document.getElementById("radar");
+
+			const infoCard =
+				document.getElementById("info-card");
+
+			const avatar =
+				document.getElementById("avatar");
+
+			const positionMarker =
+				document.getElementById("position-marker");
+
+			const speedEl =
+				document.getElementById("speed");
+
+			const speedContainer =
+				document.getElementById("speed-container");
+
+			const speedLabelEl =
+				document.getElementById("speed-label");
+
+			const temperatureEl =
+				document.getElementById("temperature");
+
+			const temperatureContainer =
+				document.getElementById("temperature-container");
+
+			const temperatureLabelEl =
+				document.getElementById("temperature-label");
+
+			const clockEl =
+				document.getElementById("clock");
+
+			const clockLabelEl =
+				document.getElementById("clock-label");
+
+			const statusEl =
+				document.getElementById("status");
+
+			const locationIcon =
+				document.getElementById("location-icon");
+
+			const neighborhoodEl =
+				document.getElementById("neighborhood");
+
+			const regionEl =
+				document.getElementById("region");
+
+			const neighborhoodSkeleton =
+				document.getElementById("neighborhood-skeleton");
+
+			const regionSkeleton =
+				document.getElementById("region-skeleton");
+
+			function updateRadarVisibility() {
+				radar.style.display =
+					showRadar ? "" : "none";
+
+				if (showRadar) {
+					speedContainer.classList.remove("hidden");
+					speedContainer.classList.add("flex");
+
+					temperatureContainer.classList.add("hidden");
+					temperatureContainer.classList.remove("flex");
+				} else {
+					speedContainer.classList.add("hidden");
+					speedContainer.classList.remove("flex");
+
+					temperatureContainer.classList.remove("hidden");
+					temperatureContainer.classList.add("flex");
+				}
+			}
+
+			speedLabelEl.textContent =
+				speedLabel;
+
+			temperatureLabelEl.textContent =
+				temperatureLabel;
+
+			updateRadarVisibility();
+
 			radar.style.backgroundColor = radarBg;
-			clockEl.style.fontSize = `${clockSize}px`;
-			radar.style.borderColor = mainColor;
+
+			clockEl.style.fontSize =
+				`${clockSize}px`;
+
+			radar.style.borderColor =
+				mainColor;
+
 			radar.style.boxShadow = `
-        0 0 7px ${mainColor},
-        0 0 18px ${hexToRgba(mainColor, 0.7)},
-        inset 0 0 10px rgba(0,0,0,.65)
-      `;
-			infoCard.style.backgroundColor = hexToRgba(bgColor, infoOpacity);
-			speedEl.style.color = mainColor;
-			locationIcon.style.color = mainColor;
-			locationIcon.style.filter = `drop-shadow(0 0 7px ${hexToRgba(mainColor, 0.8)})`;
-			positionMarker.style.borderColor = mainColor;
-			statusEl.style.backgroundColor = mainColor;
-			statusEl.style.boxShadow = `0 0 7px ${mainColor}`;
-			avatar.style.opacity = String(avatarOpacity);
-			const fallbackAvatar = makeFallbackAvatar(mainColor);
-			avatar.src = avatarURL || fallbackAvatar;
-			avatar.addEventListener("error",
+				0 0 7px ${mainColor},
+				0 0 18px ${hexToRgba(mainColor, 0.7)},
+				inset 0 0 10px rgba(0,0,0,.65)
+			`;
+
+			infoCard.style.backgroundColor =
+				hexToRgba(
+					bgColor,
+					infoOpacity
+				);
+
+			speedEl.style.color =
+				mainColor;
+
+			temperatureEl.style.color =
+				mainColor;
+
+			locationIcon.style.color =
+				mainColor;
+
+			locationIcon.style.filter =
+				`drop-shadow(0 0 7px ${hexToRgba(mainColor, 0.8)})`;
+
+			positionMarker.style.borderColor =
+				mainColor;
+
+			statusEl.style.backgroundColor =
+				mainColor;
+
+			statusEl.style.boxShadow =
+				`0 0 7px ${mainColor}`;
+
+			avatar.style.opacity =
+				String(avatarOpacity);
+
+			const fallbackAvatar =
+				makeFallbackAvatar(mainColor);
+
+			avatar.src =
+				avatarURL ||
+				fallbackAvatar;
+
+			avatar.addEventListener(
+				"error",
 				() => {
-					if (avatar.src !== fallbackAvatar) {
-						avatar.src = fallbackAvatar;
+					if (
+						avatar.src !==
+						fallbackAvatar
+					) {
+						avatar.src =
+							fallbackAvatar;
 					}
 				}, {
 				once: true
-			});
+			}
+			);
+
 			const routeCoordinates = [];
+
 			let routeAnimationFrame = null;
 			let map = null;
 			let data = null;
@@ -268,136 +591,295 @@
 			let locationSubscription = null;
 			let speedSubscription = null;
 			let headingSubscription = null;
+
 			let streamerTimeZone = null;
 			let streamerTimeZoneSource = null;
 			let lastStreamerTimestamp = null;
 			let lastHeading = null;
 			let currentBearing = 0;
+
 			let displayedSpeed = null;
 			let speedAnimationTimer = null;
+
+			let temperatureRequestController =
+				null;
+
 			const SPEED_DIGIT_HEIGHT = 17;
+
 			const defaultCenter = [0, 0];
+
 			const GEOCODE_DISTANCE_METERS = 100;
+
+			const TEMPERATURE_DISTANCE_METERS = 5000;
+
 			const MIN_BEARING_DISTANCE_METERS = 5;
+
 			const BEARING_SMOOTHING = 0.2;
-			const GOOGLE_SATELLITE_TILES = ["https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", "https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"];
+
+			const GOOGLE_SATELLITE_TILES = [
+				"https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+				"https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+				"https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+				"https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+			];
 
 			function clamp(value, min, max) {
 				if (!Number.isFinite(value)) {
 					return min;
 				}
-				return Math.min(max, Math.max(min, value));
+
+				return Math.min(
+					max,
+					Math.max(min, value)
+				);
 			}
 
 			function toNumber(value) {
-				const number = Number(value);
-				return Number.isFinite(number) ? number : null;
+				const number =
+					Number(value);
+
+				return Number.isFinite(number) ?
+					number :
+					null;
 			}
 
 			function sanitizeColor(value) {
-				let color = String(value || "").trim();
-				if (/^[0-9a-fA-F]{3}$/.test(color) || /^[0-9a-fA-F]{6}$/.test(color) || /^[0-9a-fA-F]{8}$/.test(color)) {
-					color = `#${color}`;
+				let color =
+					String(value || "").trim();
+
+				if (
+					/^[0-9a-fA-F]{3}$/.test(color) ||
+					/^[0-9a-fA-F]{6}$/.test(color) ||
+					/^[0-9a-fA-F]{8}$/.test(color)
+				) {
+					color =
+						`#${color}`;
 				}
-				if (/^#[0-9a-fA-F]{3,8}$/.test(color)) {
+
+				if (
+					/^#[0-9a-fA-F]{3,8}$/.test(color)
+				) {
 					return color;
 				}
+
 				return "#00eaff";
 			}
 
 			function sanitizeRadarBg(value) {
-				const color = String(value || "").trim();
-				if (color.toLowerCase() === "transparent") {
+				const color =
+					String(value || "").trim();
+
+				if (
+					color.toLowerCase() ===
+					"transparent"
+				) {
 					return "transparent";
 				}
+
 				return sanitizeColor(color);
 			}
 
 			function hexToRgba(hex, alpha) {
-				let value = hex.replace("#", "");
+				let value =
+					hex.replace("#", "");
+
 				if (value.length === 3) {
-					value = value.split("").map(char => char + char).join("");
+					value =
+						value
+							.split("")
+							.map(
+								char =>
+									char + char
+							)
+							.join("");
 				}
+
 				if (value.length < 6) {
 					return `rgba(0,234,255,${alpha})`;
 				}
-				const r = parseInt(value.slice(0, 2), 16);
-				const g = parseInt(value.slice(2, 4), 16);
-				const b = parseInt(value.slice(4, 6), 16);
+
+				const r =
+					parseInt(
+						value.slice(0, 2),
+						16
+					);
+
+				const g =
+					parseInt(
+						value.slice(2, 4),
+						16
+					);
+
+				const b =
+					parseInt(
+						value.slice(4, 6),
+						16
+					);
+
 				return `rgba(${r},${g},${b},${alpha})`;
 			}
 
 			function escapeXml(value) {
-				return String(value).replace(/[<>&'"]/g, character => ({
-					"<": "&lt;",
-					">": "&gt;",
-					"&": "&amp;",
-					"'": "&apos;",
-					'"': "&quot;"
-				})[character]);
+				return String(value)
+					.replace(
+						/[<>&'"]/g,
+						character =>
+							({
+								"<": "&lt;",
+								">": "&gt;",
+								"&": "&amp;",
+								"'": "&apos;",
+								'"': "&quot;"
+							})[character]
+					);
 			}
 
 			function makeFallbackAvatar(color) {
 				const svg = `
-          <svg
-xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 100 100"
-          ><rect
-              width="100"
-              height="100"
-              fill="#163b71"
-            /><circle
-              cx="50"
-              cy="39"
-              r="17"
-              fill="${escapeXml(color)}"
-            /><path
-              d="M20 88c3-22 15-32 30-32s27 10 30 32"
-              fill="${escapeXml(color)}"
-            /></svg>
-        `;
-				return ("data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg));
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 100 100"
+					>
+						<rect
+							width="100"
+							height="100"
+							fill="#163b71"
+						/>
+						<circle
+							cx="50"
+							cy="39"
+							r="17"
+							fill="${escapeXml(color)}"
+						/>
+						<path
+							d="M20 88c3-22 15-32 30-32s27 10 30 32"
+							fill="${escapeXml(color)}"
+						/>
+					</svg>
+				`;
+
+				return (
+					"data:image/svg+xml;charset=UTF-8," +
+					encodeURIComponent(svg)
+				);
 			}
 
 			function metersBetween(a, b) {
-				const earthRadius = 6371008.8;
-				const p1 = a.latitude * Math.PI / 180;
-				const p2 = b.latitude * Math.PI / 180;
-				const dp = (b.latitude - a.latitude) * Math.PI / 180;
-				const dl = (b.longitude - a.longitude) * Math.PI / 180;
-				const h = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
-				return (2 * earthRadius * Math.asin(Math.sqrt(h)));
+				const earthRadius =
+					6371008.8;
+
+				const p1 =
+					a.latitude *
+					Math.PI / 180;
+
+				const p2 =
+					b.latitude *
+					Math.PI / 180;
+
+				const dp =
+					(b.latitude - a.latitude) *
+					Math.PI / 180;
+
+				const dl =
+					(b.longitude - a.longitude) *
+					Math.PI / 180;
+
+				const h =
+					Math.sin(dp / 2) ** 2 +
+					Math.cos(p1) *
+					Math.cos(p2) *
+					Math.sin(dl / 2) ** 2;
+
+				return (
+					2 *
+					earthRadius *
+					Math.asin(
+						Math.sqrt(h)
+					)
+				);
 			}
 
 			function calculateBearing(a, b) {
-				const lat1 = a.latitude * Math.PI / 180;
-				const lat2 = b.latitude * Math.PI / 180;
-				const deltaLongitude = (b.longitude - a.longitude) * Math.PI / 180;
-				const y = Math.sin(deltaLongitude) * Math.cos(lat2);
-				const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLongitude);
-				return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+				const lat1 =
+					a.latitude *
+					Math.PI / 180;
+
+				const lat2 =
+					b.latitude *
+					Math.PI / 180;
+
+				const deltaLongitude =
+					(b.longitude - a.longitude) *
+					Math.PI / 180;
+
+				const y =
+					Math.sin(deltaLongitude) *
+					Math.cos(lat2);
+
+				const x =
+					Math.cos(lat1) *
+					Math.sin(lat2) -
+					Math.sin(lat1) *
+					Math.cos(lat2) *
+					Math.cos(deltaLongitude);
+
+				return (
+					Math.atan2(y, x) *
+					180 / Math.PI +
+					360
+				) % 360;
 			}
 
 			function normalizeBearing(value) {
-				return ((value % 360) + 360) % 360;
+				return (
+					(value % 360) +
+					360
+				) % 360;
 			}
 
-			function shortestBearingDifference(from, to) {
-				return ((to - from + 540) % 360) - 180;
+			function shortestBearingDifference(
+				from,
+				to
+			) {
+				return (
+					(to - from + 540) %
+					360
+				) - 180;
 			}
 
 			function smoothBearing(target) {
-				target = normalizeBearing(target);
-				const difference = shortestBearingDifference(currentBearing, target);
-				currentBearing = normalizeBearing(currentBearing + difference * BEARING_SMOOTHING);
+				target =
+					normalizeBearing(target);
+
+				const difference =
+					shortestBearingDifference(
+						currentBearing,
+						target
+					);
+
+				currentBearing =
+					normalizeBearing(
+						currentBearing +
+						difference *
+						BEARING_SMOOTHING
+					);
+
 				return currentBearing;
 			}
 
 			function updateMapBearing(target) {
-				if (!map || !followBearing || pitch <= 0 || !Number.isFinite(target)) {
+				if (
+					!map ||
+					!followBearing ||
+					pitch <= 0 ||
+					!Number.isFinite(target)
+				) {
 					return;
 				}
-				const bearing = smoothBearing(target);
+
+				const bearing =
+					smoothBearing(target);
+
 				map.jumpTo({
 					bearing
 				});
@@ -407,14 +889,40 @@ xmlns="http://www.w3.org/2000/svg"
 				if (!location) {
 					return null;
 				}
-				const latitude = toNumber(location.latitude ?? location.lat ?? location.coords?.latitude ?? location.location?.latitude);
-				const longitude = toNumber(location.longitude ?? location.lng ?? location.lon ?? location.coords?.longitude ?? location.location?.longitude);
-				if (latitude === null || longitude === null) {
+
+				const latitude =
+					toNumber(
+						location.latitude ??
+						location.lat ??
+						location.coords?.latitude ??
+						location.location?.latitude
+					);
+
+				const longitude =
+					toNumber(
+						location.longitude ??
+						location.lng ??
+						location.lon ??
+						location.coords?.longitude ??
+						location.location?.longitude
+					);
+
+				if (
+					latitude === null ||
+					longitude === null
+				) {
 					return null;
 				}
-				if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+
+				if (
+					latitude < -90 ||
+					latitude > 90 ||
+					longitude < -180 ||
+					longitude > 180
+				) {
 					return null;
 				}
+
 				return {
 					latitude,
 					longitude
@@ -425,6 +933,7 @@ xmlns="http://www.w3.org/2000/svg"
 				if (!value) {
 					return null;
 				}
+
 				const candidates = [
 					value.timestamp,
 					value.timeStamp,
@@ -435,19 +944,38 @@ xmlns="http://www.w3.org/2000/svg"
 					value.updatedAt,
 					value.coords?.timestamp
 				];
+
 				for (const candidate of candidates) {
-					if (candidate === undefined || candidate === null) {
+					if (
+						candidate === undefined ||
+						candidate === null
+					) {
 						continue;
 					}
-					const parsed = candidate instanceof Date ? candidate.getTime() : Date.parse(candidate);
-					if (Number.isFinite(parsed)) {
+
+					const parsed =
+						candidate instanceof Date ?
+							candidate.getTime() :
+							Date.parse(candidate);
+
+					if (
+						Number.isFinite(parsed)
+					) {
 						return parsed;
 					}
-					const numeric = Number(candidate);
-					if (Number.isFinite(numeric)) {
-						return numeric < 10000000000 ? numeric * 1000 : numeric;
+
+					const numeric =
+						Number(candidate);
+
+					if (
+						Number.isFinite(numeric)
+					) {
+						return numeric < 10000000000 ?
+							numeric * 1000 :
+							numeric;
 					}
 				}
+
 				return null;
 			}
 
@@ -455,6 +983,7 @@ xmlns="http://www.w3.org/2000/svg"
 				if (!value) {
 					return null;
 				}
+
 				const candidates = [
 					value?.timeZone,
 					value?.timezone,
@@ -466,48 +995,61 @@ xmlns="http://www.w3.org/2000/svg"
 					value.streamer?.timeZone,
 					value.streamer?.timezone
 				];
+
 				for (const candidate of candidates) {
-					if (typeof candidate === "string" && isValidTimeZone(candidate)) {
+					if (
+						typeof candidate === "string" &&
+						isValidTimeZone(candidate)
+					) {
 						return candidate;
 					}
 				}
+
 				return null;
 			}
 
 			function isValidTimeZone(timeZone) {
-				if (typeof timeZone !== "string" || !timeZone) {
+				if (
+					typeof timeZone !== "string" ||
+					!timeZone
+				) {
 					return false;
 				}
+
 				try {
-					new Intl.DateTimeFormat("en-US", {
+					new Intl.DateTimeFormat(
+						"en-US", {
 						timeZone
-					});
+					}
+					);
+
 					return true;
 				} catch {
 					return false;
 				}
 			}
 
-			function setTimeZone(timeZone, source = "location") {
-				if (!isValidTimeZone(timeZone)) {
+			function setTimeZone(
+				timeZone,
+				source = "location"
+			) {
+				if (
+					!isValidTimeZone(timeZone)
+				) {
 					return false;
 				}
-				streamerTimeZone = timeZone;
-				streamerTimeZoneSource = source;
+
+				streamerTimeZone =
+					timeZone;
+
+				streamerTimeZoneSource =
+					source;
+
 				updateClock();
+
 				return true;
 			}
 
-			function formatTimeZoneLabel(timeZone) {
-				try {
-					const parts = timeZone.split("/");
-					const city = parts.at(-1)?.replaceAll("_", " ");
-					if (city) {
-						return city;
-					}
-				} catch (_) { }
-				return "Local time";
-			}
 			const stateTimezones = {
 				"US-AL": "America/Chicago",
 				"US-AK": "America/Anchorage",
@@ -558,59 +1100,232 @@ xmlns="http://www.w3.org/2000/svg"
 				"US-WA": "America/Los_Angeles",
 				"US-WV": "America/New_York",
 				"US-WI": "America/Chicago",
-				"US-WY": "America/Denver",
+				"US-WY": "America/Denver"
 			};
 
-			function getTimezone(principalSubdivisionCode) {
-				const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-				return stateTimezones[principalSubdivisionCode] ?? browserTimezone;
+			function getTimezone(
+				principalSubdivisionCode
+			) {
+				const browserTimezone =
+					Intl.DateTimeFormat()
+						.resolvedOptions()
+						.timeZone;
+
+				return (
+					stateTimezones[
+					principalSubdivisionCode
+					] ??
+					browserTimezone
+				);
 			}
 
 			function updateClock() {
-				if (!data) return;
-				const timeZone = getTimezone(data.principalSubdivisionCode);
-				const timestamp = lastStreamerTimestamp || Date.now();
-				clockEl.textContent = new Intl.DateTimeFormat("pt-BR", {
-					timeZone,
-					hour: "2-digit",
-					minute: "2-digit",
-					second: "2-digit",
-					hour12: false
-				}).format(new Date(timestamp));
-			}
-			async function reverseGeocode(latitude, longitude) {
-				const url = new URL("https://api.bigdatacloud.net/data/reverse-geocode-client");
-				url.searchParams.set("latitude", latitude);
-				url.searchParams.set("longitude", longitude);
-				url.searchParams.set("localityLanguage", "en");
-				const response = await fetch(url.toString(), {
-					method: "GET",
-					cache: "no-store"
-				});
-				if (!response.ok) {
-					throw new Error(`Reverse geocoding failed: ${response.status}`);
+				if (!data) {
+					return;
 				}
+
+				const timeZone =
+					getTimezone(
+						data.principalSubdivisionCode
+					);
+
+				const timestamp =
+					lastStreamerTimestamp ||
+					Date.now();
+
+				clockEl.textContent =
+					new Intl.DateTimeFormat(
+						"pt-BR", {
+						timeZone,
+						hour: "2-digit",
+						minute: "2-digit",
+						second: "2-digit",
+						hour12: false
+					}
+					).format(
+						new Date(timestamp)
+					);
+			}
+
+			let lastTemperatureCoordinate = null;
+
+			async function updateTemperature(location) {
+				if (!location) {
+					return;
+				}
+
+				if (
+					lastTemperatureCoordinate &&
+					metersBetween(
+						lastTemperatureCoordinate,
+						location
+					) <
+					TEMPERATURE_DISTANCE_METERS
+				) {
+					return;
+				}
+
+				lastTemperatureCoordinate = {
+					...location
+				};
+
+				try {
+					temperatureRequestController?.abort?.();
+
+					temperatureRequestController =
+						new AbortController();
+
+					const url =
+						new URL(
+							"https://api.open-meteo.com/v1/forecast"
+						);
+
+					url.searchParams.set(
+						"latitude",
+						location.latitude
+					);
+
+					url.searchParams.set(
+						"longitude",
+						location.longitude
+					);
+
+					url.searchParams.set(
+						"current",
+						"temperature_2m"
+					);
+
+					url.searchParams.set(
+						"temperature_unit",
+						"celsius"
+					);
+
+					url.searchParams.set(
+						"timezone",
+						"auto"
+					);
+
+					const response =
+						await fetch(
+							url.toString(), {
+							method: "GET",
+							cache: "no-store",
+							signal: temperatureRequestController
+								.signal
+						}
+						);
+
+					if (!response.ok) {
+						throw new Error(
+							`Temperature request failed: ${response.status}`
+						);
+					}
+
+					const weather =
+						await response.json();
+
+					const temperature =
+						toNumber(
+							weather?.current
+								?.temperature_2m
+						);
+
+					if (
+						temperature !== null
+					) {
+						temperatureEl.textContent =
+							`${Math.round(temperature)}°`;
+					}
+				} catch (error) {
+					if (
+						error?.name !==
+						"AbortError"
+					) {
+						console.warn(
+							"Temperature update error:",
+							error
+						);
+					}
+				}
+			}
+
+			async function reverseGeocode(
+				latitude,
+				longitude
+			) {
+				const url =
+					new URL(
+						"https://api.bigdatacloud.net/data/reverse-geocode-client"
+					);
+
+				url.searchParams.set(
+					"latitude",
+					latitude
+				);
+
+				url.searchParams.set(
+					"longitude",
+					longitude
+				);
+
+				url.searchParams.set(
+					"localityLanguage",
+					"en"
+				);
+
+				const response =
+					await fetch(
+						url.toString(), {
+						method: "GET",
+						cache: "no-store"
+					}
+					);
+
+				if (!response.ok) {
+					throw new Error(
+						`Reverse geocoding failed: ${response.status}`
+					);
+				}
+
 				return response.json();
 			}
 
-			function extractGeocoderTimeZone(data) {
+			function extractGeocoderTimeZone(
+				data
+			) {
 				if (!data) {
 					return null;
 				}
+
 				const directCandidates = [
 					data.timeZone,
 					data.timezone,
 					data.ianaTimeZone,
 					data.ianaTimezone
 				];
-				for (const candidate of directCandidates) {
-					if (typeof candidate === "string" && isValidTimeZone(candidate)) {
+
+				for (
+					const candidate of directCandidates
+				) {
+					if (
+						typeof candidate ===
+						"string" &&
+						isValidTimeZone(candidate)
+					) {
 						return candidate;
 					}
 				}
-				const informative = data.localityInfo?.informative;
-				if (Array.isArray(informative)) {
-					for (const item of informative) {
+
+				const informative =
+					data.localityInfo
+						?.informative;
+
+				if (
+					Array.isArray(informative)
+				) {
+					for (
+						const item of informative
+					) {
 						const candidates = [
 							item.timeZone,
 							item.timezone,
@@ -619,64 +1334,133 @@ xmlns="http://www.w3.org/2000/svg"
 							item.name,
 							item.isoName
 						];
-						for (const candidate of candidates) {
-							if (typeof candidate === "string" && isValidTimeZone(candidate)) {
+
+						for (
+							const candidate of candidates
+						) {
+							if (
+								typeof candidate ===
+								"string" &&
+								isValidTimeZone(
+									candidate
+								)
+							) {
 								return candidate;
 							}
 						}
 					}
 				}
+
 				return null;
 			}
 
 			function showLocation(data) {
-				const neighborhood = data.locality || data.neighbourhood || data.suburb || data.cityDistrict || "";
-				const city = data.city || data.town || data.village || "";
+				const neighborhood =
+					data.locality ||
+					data.neighbourhood ||
+					data.suburb ||
+					data.cityDistrict ||
+					"";
+
+				const city =
+					data.city ||
+					data.town ||
+					data.village ||
+					"";
+
 				if (neighborhood) {
-					neighborhoodEl.textContent = neighborhood;
-					neighborhoodEl.classList.remove("hidden");
-					neighborhoodSkeleton.classList.add("hidden");
+					neighborhoodEl.textContent =
+						neighborhood;
+
+					neighborhoodEl.classList
+						.remove("hidden");
+
+					neighborhoodSkeleton.classList
+						.add("hidden");
 				}
+
 				const regionParts = [
 					city,
 					data.countryCode
 				].filter(Boolean);
+
 				if (regionParts.length) {
-					regionEl.textContent = regionParts.join(", ");
-					regionEl.classList.remove("hidden");
-					regionSkeleton.classList.add("hidden");
+					regionEl.textContent =
+						regionParts.join(", ");
+
+					regionEl.classList
+						.remove("hidden");
+
+					regionSkeleton.classList
+						.add("hidden");
 				}
-				clockLabelEl.textContent = data.principalSubdivision;
+
+				clockLabelEl.textContent =
+					data.principalSubdivision;
 			}
-			async function updateLocationDetails(location) {
-				if (geocodingInProgress) {
+
+			async function updateLocationDetails(
+				location
+			) {
+				if (
+					geocodingInProgress
+				) {
 					return;
 				}
-				if (lastGeocodedCoordinate && metersBetween(lastGeocodedCoordinate, location) < GEOCODE_DISTANCE_METERS) {
+
+				if (
+					lastGeocodedCoordinate &&
+					metersBetween(
+						lastGeocodedCoordinate,
+						location
+					) <
+					GEOCODE_DISTANCE_METERS
+				) {
 					return;
 				}
+
 				lastGeocodedCoordinate = {
 					...location
 				};
+
 				geocodingInProgress = true;
+
 				try {
-					data = await reverseGeocode(location.latitude, location.longitude);
+					data =
+						await reverseGeocode(
+							location.latitude,
+							location.longitude
+						);
+
 					showLocation(data);
+
 					if (!streamerTimeZone) {
-						const timeZone = extractGeocoderTimeZone(data);
+						const timeZone =
+							extractGeocoderTimeZone(
+								data
+							);
+
 						if (timeZone) {
-							setTimeZone(timeZone, "geocoder");
+							setTimeZone(
+								timeZone,
+								"geocoder"
+							);
 						}
 					}
 				} catch (error) {
-					console.warn("RealtimeIRL reverse geocoding error:", error);
+					console.warn(
+						"RealtimeIRL reverse geocoding error:",
+						error
+					);
 				} finally {
-					geocodingInProgress = false;
+					geocodingInProgress =
+						false;
 				}
 			}
 
 			function addRouteLayers() {
-				map.addSource("travel-route", {
+				map.addSource(
+					"travel-route", {
 					type: "geojson",
 					data: {
 						type: "Feature",
@@ -686,7 +1470,9 @@ xmlns="http://www.w3.org/2000/svg"
 							coordinates: []
 						}
 					}
-				});
+				}
+				);
+
 				map.addLayer({
 					id: "travel-route-glow",
 					type: "line",
@@ -702,6 +1488,7 @@ xmlns="http://www.w3.org/2000/svg"
 						"line-blur": 2.5
 					}
 				});
+
 				map.addLayer({
 					id: "travel-route-line",
 					type: "line",
@@ -719,87 +1506,180 @@ xmlns="http://www.w3.org/2000/svg"
 			}
 
 			function initializeMap() {
-				if (typeof maplibregl === "undefined") {
-					console.error("MapLibre GL JS failed to load.");
-					return;
-				}
-				map = new maplibregl.Map({
-					container: "map",
-					style: {
-						version: 8,
-						sources: {
-							"google-satellite": {
-								type: "raster",
-								tiles: GOOGLE_SATELLITE_TILES,
-								tileSize: 256,
-								attribution: "Google"
-							}
-						},
-						layers: [{
-							id: "google-satellite-layer",
-							type: "raster",
-							source: "google-satellite",
-							minzoom: 0,
-							maxzoom: 22
-						}],
-						sky: {}
-					},
-					center: defaultCenter,
-					zoom,
-					pitch,
-					bearing: 0,
-					minZoom: 2,
-					maxZoom: 22,
-					maxPitch: 85,
-					attributionControl: false,
-					interactive: false,
-					preserveDrawingBuffer: true,
-					antialias: true
-				});
-				map.on("load", () => {
-					addRouteLayers();
-					markerReady = true;
-					updateRouteSource();
-				});
-			}
+				if (
+					typeof maplibregl ===
+					"undefined"
+				) {
+					console.error(
+						"MapLibre GL JS failed to load."
+					);
 
-			function animateRouteSegment(from, to) {
-				if (!routeAnimation || routeAnimationDuration <= 0 || !map || !markerReady) {
-					updateRouteSource();
 					return;
 				}
-				if (routeAnimationFrame) {
-					cancelAnimationFrame(routeAnimationFrame);
-				}
-				const startTime = performance.now();
-				const originalLast = routeCoordinates[routeCoordinates.length - 1];
-				if (!originalLast || originalLast[0] !== from[0] || originalLast[1] !== from[1]) {
-					updateRouteSource();
-					return;
-				}
-				const animate = now => {
-					const progress = clamp((now - startTime) / routeAnimationDuration, 0, 1);
-					const eased = 1 - Math.pow(1 - progress, 3);
-					const longitude = from[0] + (to[0] - from[0]) * eased;
-					const latitude = from[1] + (to[1] - from[1]) * eased;
-					routeCoordinates[routeCoordinates.length - 1] = [longitude, latitude];
-					updateRouteSource();
-					if (progress < 1) {
-						routeAnimationFrame = requestAnimationFrame(animate);
-					} else {
-						routeCoordinates[routeCoordinates.length - 1] = to;
-						routeAnimationFrame = null;
+
+				map =
+					new maplibregl.Map({
+						container: "map",
+
+						style: {
+							version: 8,
+
+							sources: {
+								"google-satellite": {
+									type: "raster",
+									tiles: GOOGLE_SATELLITE_TILES,
+									tileSize: 256,
+									attribution: "Google"
+								}
+							},
+
+							layers: [{
+								id: "google-satellite-layer",
+								type: "raster",
+								source: "google-satellite",
+								minzoom: 0,
+								maxzoom: 22
+							}],
+
+							sky: {}
+						},
+
+						center: defaultCenter,
+
+						zoom,
+						pitch,
+						bearing: 0,
+
+						minZoom: 2,
+						maxZoom: 22,
+						maxPitch: 85,
+
+						attributionControl: false,
+						interactive: false,
+						preserveDrawingBuffer: true,
+						antialias: true
+					});
+
+				map.on(
+					"load",
+					() => {
+						addRouteLayers();
+
+						markerReady = true;
+
 						updateRouteSource();
 					}
-				};
-				routeAnimationFrame = requestAnimationFrame(animate);
+				);
+			}
+
+			function animateRouteSegment(
+				from,
+				to
+			) {
+				if (
+					!routeAnimation ||
+					routeAnimationDuration <= 0 ||
+					!map ||
+					!markerReady
+				) {
+					updateRouteSource();
+					return;
+				}
+
+				if (routeAnimationFrame) {
+					cancelAnimationFrame(
+						routeAnimationFrame
+					);
+				}
+
+				const startTime =
+					performance.now();
+
+				const originalLast =
+					routeCoordinates.at(-1);
+
+				if (
+					!originalLast ||
+					originalLast[0] !== from[0] ||
+					originalLast[1] !== from[1]
+				) {
+					updateRouteSource();
+					return;
+				}
+
+				const animate =
+					now => {
+						const progress =
+							clamp(
+								(now - startTime) /
+								routeAnimationDuration,
+								0,
+								1
+							);
+
+						const eased =
+							1 -
+							Math.pow(
+								1 - progress,
+								3
+							);
+
+						const longitude =
+							from[0] +
+							(to[0] - from[0]) *
+							eased;
+
+						const latitude =
+							from[1] +
+							(to[1] - from[1]) *
+							eased;
+
+						routeCoordinates[
+							routeCoordinates.length - 1
+						] = [
+								longitude,
+								latitude
+							];
+
+						updateRouteSource();
+
+						if (progress < 1) {
+							routeAnimationFrame =
+								requestAnimationFrame(
+									animate
+								);
+						} else {
+							routeCoordinates[
+								routeCoordinates.length - 1
+							] = to;
+
+							routeAnimationFrame =
+								null;
+
+							updateRouteSource();
+						}
+					};
+
+				routeAnimationFrame =
+					requestAnimationFrame(
+						animate
+					);
 			}
 
 			function updateRouteSource() {
-				if (!map || !markerReady || !map.getSource("travel-route")) {
+				if (
+					!map ||
+					!markerReady ||
+					!map.getSource(
+						"travel-route"
+					)
+				) {
 					return;
 				}
-				map.getSource("travel-route").setData({
+
+				map.getSource(
+					"travel-route"
+				).setData({
 					type: "Feature",
 					properties: {},
 					geometry: {
@@ -809,25 +1689,51 @@ xmlns="http://www.w3.org/2000/svg"
 				});
 			}
 
-			function applyLocation(rawLocation) {
-				const location = normalizeLocation(rawLocation);
+			function applyLocation(
+				rawLocation
+			) {
+				const location =
+					normalizeLocation(
+						rawLocation
+					);
+
 				if (!location) {
 					return;
 				}
-				const timestamp = extractTimestamp(rawLocation);
+
+				const timestamp =
+					extractTimestamp(
+						rawLocation
+					);
+
 				if (timestamp) {
-					lastStreamerTimestamp = timestamp;
+					lastStreamerTimestamp =
+						timestamp;
 				}
-				const rtirlTimeZone = extractTimeZone(rawLocation);
-				if (rtirlTimeZone && !streamerTimeZone) {
-					setTimeZone(rtirlTimeZone, "rtirl");
+
+				const rtirlTimeZone =
+					extractTimeZone(
+						rawLocation
+					);
+
+				if (
+					rtirlTimeZone &&
+					!streamerTimeZone
+				) {
+					setTimeZone(
+						rtirlTimeZone,
+						"rtirl"
+					);
 				}
+
 				const coordinate = [
 					location.longitude,
 					location.latitude
 				];
+
 				if (!firstFixReceived) {
 					firstFixReceived = true;
+
 					map?.jumpTo({
 						center: coordinate,
 						zoom,
@@ -839,204 +1745,811 @@ xmlns="http://www.w3.org/2000/svg"
 						center: coordinate
 					});
 				}
-				if (!lastCoordinate || metersBetween(lastCoordinate, location) >= 2) {
-					const previousCoordinate = routeCoordinates.at(-1);
-					routeCoordinates.push(coordinate);
-					lastCoordinate = location;
-					if (previousCoordinate && routeAnimation) {
-						routeCoordinates[routeCoordinates.length - 1] = previousCoordinate;
-						animateRouteSegment(previousCoordinate, coordinate);
+
+				if (
+					!lastCoordinate ||
+					metersBetween(
+						lastCoordinate,
+						location
+					) >= 2
+				) {
+					const previousCoordinate =
+						routeCoordinates.at(-1);
+
+					routeCoordinates.push(
+						coordinate
+					);
+
+					lastCoordinate =
+						location;
+
+					if (
+						previousCoordinate &&
+						routeAnimation
+					) {
+						routeCoordinates[
+							routeCoordinates.length - 1
+						] =
+							previousCoordinate;
+
+						animateRouteSegment(
+							previousCoordinate,
+							coordinate
+						);
 					} else {
 						updateRouteSource();
 					}
 				}
-				statusEl.classList.remove("opacity-0");
-				statusEl.classList.add("opacity-100");
-				updateLocationDetails(location);
+
+				statusEl.classList
+					.remove("opacity-0");
+
+				statusEl.classList
+					.add("opacity-100");
+
+				updateLocationDetails(
+					location
+				);
+
+				updateTemperature(
+					location
+				);
+
 				updateClock();
 			}
 
 			function createSpeedDigit(digit) {
-				const wrapper = document.createElement("span");
-				wrapper.className = "speed-digit";
-				wrapper.dataset.value = digit;
-				const track = document.createElement("span");
-				track.className = "speed-digit-track";
-				for (let i = 0; i < 30; i++) {
-					const number = document.createElement("span");
-					number.textContent = i % 10;
-					number.className = "speed-digit-number";
-					track.appendChild(number);
+				const wrapper =
+					document.createElement(
+						"span"
+					);
+
+				wrapper.className =
+					"speed-digit";
+
+				wrapper.dataset.value =
+					digit;
+
+				const track =
+					document.createElement(
+						"span"
+					);
+
+				track.className =
+					"speed-digit-track";
+
+				for (
+					let i = 0; i < 30; i++
+				) {
+					const number =
+						document.createElement(
+							"span"
+						);
+
+					number.textContent =
+						i % 10;
+
+					number.className =
+						"speed-digit-number";
+
+					track.appendChild(
+						number
+					);
 				}
-				wrapper.appendChild(track);
-				track.style.transform = `translateY(-${digit * SPEED_DIGIT_HEIGHT}px)`;
+
+				wrapper.appendChild(
+					track
+				);
+
+				track.style.transform =
+					`translateY(-${digit *
+					SPEED_DIGIT_HEIGHT
+					}px)`;
+
 				return wrapper;
 			}
 
-			function renderSpeedImmediately(value) {
-				speedEl.innerHTML = "";
-				const digits = String(value).split("");
-				for (const digit of digits) {
-					speedEl.appendChild(createSpeedDigit(Number(digit)));
+			function renderSpeedImmediately(
+				value
+			) {
+				speedEl.innerHTML =
+					"";
+
+				const digits =
+					String(value)
+						.split("");
+
+				for (
+					const digit of digits
+				) {
+					speedEl.appendChild(
+						createSpeedDigit(
+							Number(digit)
+						)
+					);
 				}
 			}
 
-			function getShortestDigitDelta(from, to) {
-				let delta = to - from;
+			function getShortestDigitDelta(
+				from,
+				to
+			) {
+				let delta =
+					to - from;
+
 				if (delta > 5) {
 					delta -= 10;
 				} else if (delta < -5) {
 					delta += 10;
 				}
+
 				return delta;
 			}
 
-			function animateSpeedTo(target) {
+			function animateSpeedTo(
+				target
+			) {
 				if (speedAnimationTimer) {
-					clearTimeout(speedAnimationTimer);
-					speedAnimationTimer = null;
+					clearTimeout(
+						speedAnimationTimer
+					);
+
+					speedAnimationTimer =
+						null;
 				}
-				const fromDigits = String(displayedSpeed).split("");
-				const toDigits = String(target).split("");
-				if (toDigits.length > fromDigits.length) {
-					const difference = toDigits.length - fromDigits.length;
-					for (let i = 0; i < difference; i++) {
-						const digitIndex = i;
-						const digit = Number(toDigits[digitIndex]);
-						const newDigit = createSpeedDigit(digit);
-						newDigit.classList.add("speed-digit-new");
-						speedEl.insertBefore(newDigit, speedEl.firstChild);
-						requestAnimationFrame(() => {
-							newDigit.classList.add("visible");
-						});
+
+				const fromDigits =
+					String(displayedSpeed)
+						.split("");
+
+				const toDigits =
+					String(target)
+						.split("");
+
+				if (
+					toDigits.length >
+					fromDigits.length
+				) {
+					const difference =
+						toDigits.length -
+						fromDigits.length;
+
+					for (
+						let i = 0; i < difference; i++
+					) {
+						const digitIndex =
+							i;
+
+						const digit =
+							Number(
+								toDigits[
+								digitIndex
+								]
+							);
+
+						const newDigit =
+							createSpeedDigit(
+								digit
+							);
+
+						newDigit.classList
+							.add(
+								"speed-digit-new"
+							);
+
+						speedEl.insertBefore(
+							newDigit,
+							speedEl.firstChild
+						);
+
+						requestAnimationFrame(
+							() => {
+								newDigit.classList
+									.add(
+										"visible"
+									);
+							}
+						);
 					}
-				} else if (toDigits.length < fromDigits.length) {
-					const difference = fromDigits.length - toDigits.length;
-					for (let i = 0; i < difference; i++) {
-						const digit = speedEl.firstElementChild;
+				} else if (
+					toDigits.length <
+					fromDigits.length
+				) {
+					const difference =
+						fromDigits.length -
+						toDigits.length;
+
+					for (
+						let i = 0; i < difference; i++
+					) {
+						const digit =
+							speedEl
+								.firstElementChild;
+
 						if (digit) {
-							digit.classList.add("speed-digit-removing");
-							setTimeout(() => {
-								digit.remove();
-							}, 180);
+							digit.classList
+								.add(
+									"speed-digit-removing"
+								);
+
+							setTimeout(
+								() => {
+									digit.remove();
+								},
+								180
+							);
 						}
 					}
 				}
-				requestAnimationFrame(() => {
-					const duration = clamp(parseFloat(params.get("speedAnimationDuration") ?? "500"), 50, 10000);
-					const wheels = speedEl.querySelectorAll(".speed-digit");
-					const currentDigits = String(displayedSpeed).padStart(toDigits.length, " ");
-					wheels.forEach((wheel, index) => {
-						const track = wheel.querySelector(".speed-digit-track");
-						const currentChar = currentDigits[index];
-						const fromDigit = Number.isFinite(Number(currentChar)) ? Number(currentChar) : 0;
-						const targetDigit = Number(toDigits[index]);
-						const delta = getShortestDigitDelta(fromDigit, targetDigit);
-						const baseIndex = 10 + fromDigit;
-						const targetIndex = baseIndex + delta;
-						track.style.transition = "none";
-						track.style.transform = `translateY(-${baseIndex * SPEED_DIGIT_HEIGHT}px)`;
-						void track.offsetHeight;
-						track.style.transition = `transform ${duration}ms cubic-bezier(.22,.61,.36,1)`;
-						track.style.transform = `translateY(-${targetIndex * SPEED_DIGIT_HEIGHT}px)`;
-						wheel.classList.add("visible");
-					});
-					displayedSpeed = target;
-					speedAnimationTimer = setTimeout(() => {
-						speedAnimationTimer = null;
-						const finalWheels = speedEl.querySelectorAll(".speed-digit");
-						finalWheels.forEach((wheel, index) => {
-							const track = wheel.querySelector(".speed-digit-track");
-							const digit = Number(toDigits[index]);
-							track.style.transition = "none";
-							track.style.transform = `translateY(-${digit * SPEED_DIGIT_HEIGHT}px)`;
-						});
-					}, duration);
-				});
+
+				requestAnimationFrame(
+					() => {
+						const duration =
+							speedAnimationDuration;
+
+						const wheels =
+							speedEl.querySelectorAll(
+								".speed-digit"
+							);
+
+						const currentDigits =
+							String(
+								displayedSpeed
+							).padStart(
+								toDigits.length,
+								" "
+							);
+
+						wheels.forEach(
+							(
+								wheel,
+								index
+							) => {
+								const track =
+									wheel.querySelector(
+										".speed-digit-track"
+									);
+
+								const currentChar =
+									currentDigits[
+									index
+									];
+
+								const fromDigit =
+									Number.isFinite(
+										Number(
+											currentChar
+										)
+									) ?
+										Number(
+											currentChar
+										) :
+										0;
+
+								const targetDigit =
+									Number(
+										toDigits[
+										index
+										]
+									);
+
+								const delta =
+									getShortestDigitDelta(
+										fromDigit,
+										targetDigit
+									);
+
+								const baseIndex =
+									10 +
+									fromDigit;
+
+								const targetIndex =
+									baseIndex +
+									delta;
+
+								track.style.transition =
+									"none";
+
+								track.style.transform =
+									`translateY(-${baseIndex *
+									SPEED_DIGIT_HEIGHT
+									}px)`;
+
+								void track.offsetHeight;
+
+								track.style.transition =
+									`transform ${duration
+									}ms cubic-bezier(.22,.61,.36,1)`;
+
+								track.style.transform =
+									`translateY(-${targetIndex *
+									SPEED_DIGIT_HEIGHT
+									}px)`;
+
+								wheel.classList
+									.add(
+										"visible"
+									);
+							}
+						);
+
+						displayedSpeed =
+							target;
+
+						speedAnimationTimer =
+							setTimeout(
+								() => {
+									speedAnimationTimer =
+										null;
+
+									const finalWheels =
+										speedEl.querySelectorAll(
+											".speed-digit"
+										);
+
+									finalWheels.forEach(
+										(
+											wheel,
+											index
+										) => {
+											const track =
+												wheel.querySelector(
+													".speed-digit-track"
+												);
+
+											const digit =
+												Number(
+													toDigits[
+													index
+													]
+												);
+
+											track.style.transition =
+												"none";
+
+											track.style.transform =
+												`translateY(-${digit *
+												SPEED_DIGIT_HEIGHT
+												}px)`;
+										}
+									);
+								},
+								duration
+							);
+					}
+				);
 			}
 
 			function applySpeed(speed) {
-				const numericSpeed = toNumber(speed);
-				if (numericSpeed === null) {
+				const numericSpeed =
+					toNumber(speed);
+
+				if (
+					numericSpeed === null
+				) {
 					return;
 				}
-				const targetSpeed = Math.max(0, Math.round(numericSpeed * 3.6));
-				if (displayedSpeed === null) {
-					displayedSpeed = targetSpeed;
-					renderSpeedImmediately(targetSpeed);
+
+				const targetSpeed =
+					Math.max(
+						0,
+						Math.round(
+							numericSpeed * 3.6
+						)
+					);
+
+				if (
+					displayedSpeed === null
+				) {
+					displayedSpeed =
+						targetSpeed;
+
+					renderSpeedImmediately(
+						targetSpeed
+					);
+
 					return;
 				}
-				if (targetSpeed === displayedSpeed) {
+
+				if (
+					targetSpeed ===
+					displayedSpeed
+				) {
 					return;
 				}
-				animateSpeedTo(targetSpeed);
+
+				if (!speedAnimation) {
+					displayedSpeed =
+						targetSpeed;
+
+					renderSpeedImmediately(
+						targetSpeed
+					);
+
+					return;
+				}
+
+				animateSpeedTo(
+					targetSpeed
+				);
 			}
 
 			function debugSpeed(value) {
-				const target = Number(value);
-				if (!Number.isFinite(target) || target < 0) {
-					console.warn("debugSpeed(value): value must be a number >= 0");
+				const target =
+					Number(value);
+
+				if (
+					!Number.isFinite(target) ||
+					target < 0
+				) {
+					console.warn(
+						"debugSpeed(value): value must be a number >= 0"
+					);
+
 					return;
 				}
-				console.log(`Speed: ${displayedSpeed ?? "--"} → ${target} km/h`);
-				applySpeed(target / 3.6);
+
+				console.log(
+					`Speed: ${displayedSpeed ??
+					"--"
+					} → ${target} km/h`
+				);
+
+				applySpeed(
+					target / 3.6
+				);
 			}
-			window.debugSpeed = debugSpeed;
+
+			window.debugSpeed =
+				debugSpeed;
 
 			function applyHeading(heading) {
-				const value = toNumber(heading);
+				const value =
+					toNumber(heading);
+
 				if (value === null) {
 					return;
 				}
-				lastHeading = normalizeBearing(value);
-				updateMapBearing(lastHeading);
+
+				lastHeading =
+					normalizeBearing(value);
+
+				updateMapBearing(
+					lastHeading
+				);
 			}
 
 			function connectToPullKey() {
 				if (!pullKey) {
-					console.error("Missing pullKey URL parameter.");
+					console.error(
+						"Missing pullKey URL parameter."
+					);
+
 					return;
 				}
-				if (typeof RealtimeIRL === "undefined") {
-					console.error("RealtimeIRL API failed to load.");
+
+				if (
+					typeof RealtimeIRL ===
+					"undefined"
+				) {
+					console.error(
+						"RealtimeIRL API failed to load."
+					);
+
 					return;
 				}
-				const client = RealtimeIRL.forPullKey(pullKey);
-				locationSubscription = client.addLocationListener(location => {
-					applyLocation(location);
-				}, error => {
-					console.error("RealtimeIRL location error:", error);
-				});
-				speedSubscription = client.addSpeedListener(speed => {
-					applySpeed(speed);
-				}, error => {
-					console.error("RealtimeIRL speed error:", error);
-				});
-				if (typeof client.addHeadingListener === "function") {
-					headingSubscription = client.addHeadingListener(heading => {
-						applyHeading(heading);
-					}, error => {
-						console.error("RealtimeIRL heading error:", error);
-					});
+
+				const client =
+					RealtimeIRL.forPullKey(
+						pullKey
+					);
+
+				locationSubscription =
+					client.addLocationListener(
+						location => {
+							applyLocation(
+								location
+							);
+						},
+						error => {
+							console.error(
+								"RealtimeIRL location error:",
+								error
+							);
+						}
+					);
+
+				speedSubscription =
+					client.addSpeedListener(
+						speed => {
+							applySpeed(
+								speed
+							);
+						},
+						error => {
+							console.error(
+								"RealtimeIRL speed error:",
+								error
+							);
+						}
+					);
+
+				if (
+					typeof client.addHeadingListener ===
+					"function"
+				) {
+					headingSubscription =
+						client.addHeadingListener(
+							heading => {
+								applyHeading(
+									heading
+								);
+							},
+							error => {
+								console.error(
+									"RealtimeIRL heading error:",
+									error
+								);
+							}
+						);
 				}
 			}
-			window.addEventListener("beforeunload", () => {
+
+			function isModerator(message) {
+				const badges =
+					message?.sender?.identity?.badges;
+
+				if (!Array.isArray(badges)) {
+					return false;
+				}
+
+				return badges.some(
+					badge =>
+						badge &&
+						(
+							badge.type === "moderator" ||
+							badge.type === "broadcaster"
+						)
+				);
+			}
+
+			function parseRadarCommand(content) {
+				if (
+					typeof content !==
+					"string"
+				) {
+					return null;
+				}
+
+				const trimmed =
+					content.trim();
+
+				const match =
+					trimmed.match(
+						/^!radar(?:\s+(.+?))?\s*$/i
+					);
+
+				if (!match) {
+					return null;
+				}
+
+				const argument =
+					match[1]
+						?.trim()
+						.toLowerCase();
+
+				if (!argument) {
+					return {
+						type: "toggle"
+					};
+				}
+
+				if (
+					argument === "1" ||
+					argument === "true"
+				) {
+					return {
+						type: "set",
+						value: true
+					};
+				}
+
+				if (
+					argument === "0" ||
+					argument === "false"
+				) {
+					return {
+						type: "set",
+						value: false
+					};
+				}
+
+				return null;
+			}
+
+			function handleKickMessage(
+				message
+			) {
+				if (
+					!isModerator(message)
+				) {
+					return;
+				}
+
+				const command =
+					parseRadarCommand(
+						message?.content
+					);
+
+				if (!command) {
+					return;
+				}
+
+				if (
+					command.type ===
+					"toggle"
+				) {
+					showRadar = !showRadar;
+				} else {
+					showRadar =
+						command.value;
+				}
+
+				updateRadarVisibility();
+
+				console.log(
+					`Radar ${showRadar
+						? "enabled"
+						: "disabled"
+					} by Kick moderator command.`
+				);
+			}
+
+			let kickClient = null;
+
+			function connectToKick() {
+				if (!CHANNEL) {
+					console.log(
+						"kickChannel not provided; Kick control disabled."
+					);
+
+					return;
+				}
+
+				if (
+					typeof kichat ===
+					"undefined" ||
+					typeof kichat.KiChatjs !==
+					"function"
+				) {
+					console.error(
+						"kichat.js failed to load."
+					);
+
+					return;
+				}
+
 				try {
-					locationSubscription?.dispose?.();
-				} catch (_) { }
-				try {
-					speedSubscription?.dispose?.();
-				} catch (_) { }
-				try {
-					headingSubscription?.dispose?.();
-				} catch (_) { }
-			});
+					kickClient =
+						new kichat.KiChatjs();
+
+					kickClient.on(
+						"connected",
+						() => {
+							console.log(
+								`Connected to Kick chat: ${CHANNEL}`
+							);
+						}
+					);
+
+					kickClient.on(
+						"join",
+						channel => {
+							console.log(
+								"Joined Kick channel:",
+								channel?.info?.slug ||
+								channel?.slug ||
+								CHANNEL
+							);
+						}
+					);
+
+					kickClient.on(
+						"message",
+						(
+							message,
+							channel
+						) => {
+							const slug =
+								channel?.info?.slug ||
+								channel?.slug;
+
+							if (
+								slug &&
+								slug.toLowerCase() !==
+								CHANNEL.toLowerCase()
+							) {
+								return;
+							}
+
+							handleKickMessage(
+								message
+							);
+						}
+					);
+
+					kickClient.on(
+						"error",
+						error => {
+							console.error(
+								"Kick chat error:",
+								error
+							);
+						}
+					);
+
+					kickClient.connect();
+
+					kickClient.join(
+						CHANNEL
+					);
+				} catch (error) {
+					console.error(
+						"Failed to initialize Kick chat:",
+						error
+					);
+				}
+			}
+
+			window.addEventListener(
+				"beforeunload",
+				() => {
+					try {
+						locationSubscription
+							?.dispose?.();
+					} catch (_) { }
+
+					try {
+						speedSubscription
+							?.dispose?.();
+					} catch (_) { }
+
+					try {
+						headingSubscription
+							?.dispose?.();
+					} catch (_) { }
+
+					try {
+						temperatureRequestController
+							?.abort?.();
+					} catch (_) { }
+
+					try {
+						kickClient
+							?.close?.();
+					} catch (_) { }
+				}
+			);
+
 			initializeMap();
-			setTimeZone("pt-BR", "fallback");
+
+			setTimeZone(
+				"pt-BR",
+				"fallback"
+			);
+
 			connectToPullKey();
-			setInterval(updateClock, 1000);
+
+			connectToKick();
+
+			setInterval(
+				updateClock,
+				1000
+			);
 		})();
+
 	</script>
+
 	<style>
 		@keyframes avatar-pulse {
 
@@ -1051,7 +2564,8 @@ xmlns="http://www.w3.org/2000/svg"
 		}
 
 		.animate-avatar-pulse {
-			animation: avatar-pulse 3s ease-in-out infinite;
+			animation:
+				avatar-pulse 3s ease-in-out infinite;
 		}
 
 		#speed {
@@ -1108,6 +2622,7 @@ xmlns="http://www.w3.org/2000/svg"
 				transform 180ms ease;
 		}
 	</style>
+
 </body>
 
 </html>
