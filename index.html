@@ -6,6 +6,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>RealtimeIRL Radar</title>
 
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
 	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@rtirl/api@1.2.5/lib/index.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
@@ -165,7 +169,6 @@
 				px-3
 			">
 
-				<!-- SPEED -->
 				<div id="speed-container" class="flex flex-col justify-center">
 
 					<div id="speed-label" class="
@@ -205,7 +208,6 @@
 					</div>
 				</div>
 
-				<!-- TEMPERATURE -->
 				<div id="temperature-container" class="hidden flex-col justify-center">
 
 					<div id="temperature-label" class="
@@ -276,16 +278,24 @@
 		(() => {
 			"use strict";
 
-			const params = new URLSearchParams(window.location.search);
+			const params =
+				new URLSearchParams(
+					window.location.search
+				);
 
-			function getBooleanParam(name, defaultValue) {
-				const value = params.get(name);
+			function getBooleanParam(
+				name,
+				defaultValue
+			) {
+				const value =
+					params.get(name);
 
 				if (value === null) {
 					return defaultValue;
 				}
 
-				const normalized = value.trim().toLowerCase();
+				const normalized =
+					value.trim().toLowerCase();
 
 				if (
 					normalized === "1" ||
@@ -304,10 +314,115 @@
 				return defaultValue;
 			}
 
+			function clamp(
+				value,
+				min,
+				max
+			) {
+				if (
+					!Number.isFinite(value)
+				) {
+					return min;
+				}
+
+				return Math.min(
+					max,
+					Math.max(min, value)
+				);
+			}
+
+			function toNumber(value) {
+				const number =
+					Number(value);
+
+				return Number.isFinite(number) ?
+					number :
+					null;
+			}
+
 			const pullKey =
 				params.get("pullKey") ||
 				params.get("key") ||
 				"";
+
+			function sanitizeColor(value) {
+				let color =
+					String(value || "").trim();
+
+				if (
+					/^[0-9a-fA-F]{3}$/.test(color) ||
+					/^[0-9a-fA-F]{6}$/.test(color) ||
+					/^[0-9a-fA-F]{8}$/.test(color)
+				) {
+					color =
+						`#${color}`;
+				}
+
+				if (
+					/^#[0-9a-fA-F]{3,8}$/.test(color)
+				) {
+					return color;
+				}
+
+				return "#00eaff";
+			}
+
+			function sanitizeRadarBg(value) {
+				const color =
+					String(value || "").trim();
+
+				if (
+					color.toLowerCase() ===
+					"transparent"
+				) {
+					return "transparent";
+				}
+
+				return sanitizeColor(color);
+			}
+
+			function hexToRgba(
+				hex,
+				alpha
+			) {
+				let value =
+					hex.replace("#", "");
+
+				if (value.length === 3) {
+					value =
+						value
+							.split("")
+							.map(
+								char =>
+									char + char
+							)
+							.join("");
+				}
+
+				if (value.length < 6) {
+					return `rgba(0,234,255,${alpha})`;
+				}
+
+				const r =
+					parseInt(
+						value.slice(0, 2),
+						16
+					);
+
+				const g =
+					parseInt(
+						value.slice(2, 4),
+						16
+					);
+
+				const b =
+					parseInt(
+						value.slice(4, 6),
+						16
+					);
+
+				return `rgba(${r},${g},${b},${alpha})`;
+			}
 
 			const mainColor =
 				sanitizeColor(
@@ -357,6 +472,29 @@
 						params.get("routeAnimationDuration") ?? "1000"
 					),
 					0,
+					10000
+				);
+
+			const followOSRM =
+				getBooleanParam(
+					"followOSRM",
+					false
+				);
+
+			const smoothBearingEnabled =
+				getBooleanParam(
+					"smoothBearing",
+					true
+				);
+
+			const smoothBearingDuration =
+				clamp(
+					parseFloat(
+						params.get("smoothBearingDuration") ??
+						params.get("smoothBearingDurationMs") ??
+						"1000"
+					),
+					50,
 					10000
 				);
 
@@ -429,78 +567,137 @@
 				params.get("kickChannel") || "";
 
 			const CHANNEL =
-				kickChannelParam.replace(/_/g, "-");
+				kickChannelParam.replace(
+					/_/g,
+					"-"
+				);
 
 			const radar =
-				document.getElementById("radar");
+				document.getElementById(
+					"radar"
+				);
 
 			const infoCard =
-				document.getElementById("info-card");
+				document.getElementById(
+					"info-card"
+				);
 
 			const avatar =
-				document.getElementById("avatar");
+				document.getElementById(
+					"avatar"
+				);
 
 			const positionMarker =
-				document.getElementById("position-marker");
+				document.getElementById(
+					"position-marker"
+				);
 
 			const speedEl =
-				document.getElementById("speed");
+				document.getElementById(
+					"speed"
+				);
 
 			const speedContainer =
-				document.getElementById("speed-container");
+				document.getElementById(
+					"speed-container"
+				);
 
 			const speedLabelEl =
-				document.getElementById("speed-label");
+				document.getElementById(
+					"speed-label"
+				);
 
 			const temperatureEl =
-				document.getElementById("temperature");
+				document.getElementById(
+					"temperature"
+				);
 
 			const temperatureContainer =
-				document.getElementById("temperature-container");
+				document.getElementById(
+					"temperature-container"
+				);
 
 			const temperatureLabelEl =
-				document.getElementById("temperature-label");
+				document.getElementById(
+					"temperature-label"
+				);
 
 			const clockEl =
-				document.getElementById("clock");
+				document.getElementById(
+					"clock"
+				);
 
 			const clockLabelEl =
-				document.getElementById("clock-label");
+				document.getElementById(
+					"clock-label"
+				);
 
 			const statusEl =
-				document.getElementById("status");
+				document.getElementById(
+					"status"
+				);
 
 			const locationIcon =
-				document.getElementById("location-icon");
+				document.getElementById(
+					"location-icon"
+				);
 
 			const neighborhoodEl =
-				document.getElementById("neighborhood");
+				document.getElementById(
+					"neighborhood"
+				);
 
 			const regionEl =
-				document.getElementById("region");
+				document.getElementById(
+					"region"
+				);
 
 			const neighborhoodSkeleton =
-				document.getElementById("neighborhood-skeleton");
+				document.getElementById(
+					"neighborhood-skeleton"
+				);
 
 			const regionSkeleton =
-				document.getElementById("region-skeleton");
+				document.getElementById(
+					"region-skeleton"
+				);
 
 			function updateRadarVisibility() {
 				radar.style.display =
 					showRadar ? "" : "none";
 
 				if (showRadar) {
-					speedContainer.classList.remove("hidden");
-					speedContainer.classList.add("flex");
+					speedContainer.classList.remove(
+						"hidden"
+					);
 
-					temperatureContainer.classList.add("hidden");
-					temperatureContainer.classList.remove("flex");
+					speedContainer.classList.add(
+						"flex"
+					);
+
+					temperatureContainer.classList.add(
+						"hidden"
+					);
+
+					temperatureContainer.classList.remove(
+						"flex"
+					);
 				} else {
-					speedContainer.classList.add("hidden");
-					speedContainer.classList.remove("flex");
+					speedContainer.classList.add(
+						"hidden"
+					);
 
-					temperatureContainer.classList.remove("hidden");
-					temperatureContainer.classList.add("flex");
+					speedContainer.classList.remove(
+						"flex"
+					);
+
+					temperatureContainer.classList.remove(
+						"hidden"
+					);
+
+					temperatureContainer.classList.add(
+						"flex"
+					);
 				}
 			}
 
@@ -512,7 +709,8 @@
 
 			updateRadarVisibility();
 
-			radar.style.backgroundColor = radarBg;
+			radar.style.backgroundColor =
+				radarBg;
 
 			clockEl.style.fontSize =
 				`${clockSize}px`;
@@ -557,7 +755,9 @@
 				String(avatarOpacity);
 
 			const fallbackAvatar =
-				makeFallbackAvatar(mainColor);
+				makeFallbackAvatar(
+					mainColor
+				);
 
 			avatar.src =
 				avatarURL ||
@@ -573,14 +773,23 @@
 						avatar.src =
 							fallbackAvatar;
 					}
-				}, {
-				once: true
-			}
+				},
+				{
+					once: true
+				}
 			);
 
 			const routeCoordinates = [];
 
-			let routeAnimationFrame = null;
+			let routeAnimationFrame =
+				null;
+
+			let bearingAnimationFrame =
+				null;
+
+			let bearingAnimationId =
+				0;
+
 			let map = null;
 			let data = null;
 			let markerReady = false;
@@ -606,15 +815,17 @@
 
 			const SPEED_DIGIT_HEIGHT = 17;
 
-			const defaultCenter = [0, 0];
+			const defaultCenter =
+				[0, 0];
 
-			const GEOCODE_DISTANCE_METERS = 100;
+			const GEOCODE_DISTANCE_METERS =
+				100;
 
-			const TEMPERATURE_DISTANCE_METERS = 5000;
+			const TEMPERATURE_DISTANCE_METERS =
+				5000;
 
-			const MIN_BEARING_DISTANCE_METERS = 5;
-
-			const BEARING_SMOOTHING = 0.2;
+			const MIN_BEARING_DISTANCE_METERS =
+				5;
 
 			const GOOGLE_SATELLITE_TILES = [
 				"https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
@@ -623,148 +834,10 @@
 				"https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 			];
 
-			function clamp(value, min, max) {
-				if (!Number.isFinite(value)) {
-					return min;
-				}
-
-				return Math.min(
-					max,
-					Math.max(min, value)
-				);
-			}
-
-			function toNumber(value) {
-				const number =
-					Number(value);
-
-				return Number.isFinite(number) ?
-					number :
-					null;
-			}
-
-			function sanitizeColor(value) {
-				let color =
-					String(value || "").trim();
-
-				if (
-					/^[0-9a-fA-F]{3}$/.test(color) ||
-					/^[0-9a-fA-F]{6}$/.test(color) ||
-					/^[0-9a-fA-F]{8}$/.test(color)
-				) {
-					color =
-						`#${color}`;
-				}
-
-				if (
-					/^#[0-9a-fA-F]{3,8}$/.test(color)
-				) {
-					return color;
-				}
-
-				return "#00eaff";
-			}
-
-			function sanitizeRadarBg(value) {
-				const color =
-					String(value || "").trim();
-
-				if (
-					color.toLowerCase() ===
-					"transparent"
-				) {
-					return "transparent";
-				}
-
-				return sanitizeColor(color);
-			}
-
-			function hexToRgba(hex, alpha) {
-				let value =
-					hex.replace("#", "");
-
-				if (value.length === 3) {
-					value =
-						value
-							.split("")
-							.map(
-								char =>
-									char + char
-							)
-							.join("");
-				}
-
-				if (value.length < 6) {
-					return `rgba(0,234,255,${alpha})`;
-				}
-
-				const r =
-					parseInt(
-						value.slice(0, 2),
-						16
-					);
-
-				const g =
-					parseInt(
-						value.slice(2, 4),
-						16
-					);
-
-				const b =
-					parseInt(
-						value.slice(4, 6),
-						16
-					);
-
-				return `rgba(${r},${g},${b},${alpha})`;
-			}
-
-			function escapeXml(value) {
-				return String(value)
-					.replace(
-						/[<>&'"]/g,
-						character =>
-							({
-								"<": "&lt;",
-								">": "&gt;",
-								"&": "&amp;",
-								"'": "&apos;",
-								'"': "&quot;"
-							})[character]
-					);
-			}
-
-			function makeFallbackAvatar(color) {
-				const svg = `
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 100 100"
-					>
-						<rect
-							width="100"
-							height="100"
-							fill="#163b71"
-						/>
-						<circle
-							cx="50"
-							cy="39"
-							r="17"
-							fill="${escapeXml(color)}"
-						/>
-						<path
-							d="M20 88c3-22 15-32 30-32s27 10 30 32"
-							fill="${escapeXml(color)}"
-						/>
-					</svg>
-				`;
-
-				return (
-					"data:image/svg+xml;charset=UTF-8," +
-					encodeURIComponent(svg)
-				);
-			}
-
-			function metersBetween(a, b) {
+			function metersBetween(
+				a,
+				b
+			) {
 				const earthRadius =
 					6371008.8;
 
@@ -799,7 +872,10 @@
 				);
 			}
 
-			function calculateBearing(a, b) {
+			function calculateBearing(
+				a,
+				b
+			) {
 				const lat1 =
 					a.latitude *
 					Math.PI / 180;
@@ -830,7 +906,9 @@
 				) % 360;
 			}
 
-			function normalizeBearing(value) {
+			function normalizeBearing(
+				value
+			) {
 				return (
 					(value % 360) +
 					360
@@ -847,27 +925,32 @@
 				) - 180;
 			}
 
-			function smoothBearing(target) {
-				target =
-					normalizeBearing(target);
-
-				const difference =
-					shortestBearingDifference(
-						currentBearing,
-						target
-					);
+			function setMapBearing(
+				bearing
+			) {
+				if (
+					!map ||
+					!followBearing ||
+					pitch <= 0 ||
+					!Number.isFinite(bearing)
+				) {
+					return;
+				}
 
 				currentBearing =
 					normalizeBearing(
-						currentBearing +
-						difference *
-						BEARING_SMOOTHING
+						bearing
 					);
 
-				return currentBearing;
+				map.jumpTo({
+					bearing:
+						currentBearing
+				});
 			}
 
-			function updateMapBearing(target) {
+			function animateBearingTo(
+				target
+			) {
 				if (
 					!map ||
 					!followBearing ||
@@ -877,15 +960,121 @@
 					return;
 				}
 
-				const bearing =
-					smoothBearing(target);
+				target =
+					normalizeBearing(
+						target
+					);
 
-				map.jumpTo({
-					bearing
-				});
+				const start =
+					currentBearing;
+
+				const difference =
+					shortestBearingDifference(
+						start,
+						target
+					);
+
+				bearingAnimationId++;
+
+				const animationId =
+					bearingAnimationId;
+
+				if (bearingAnimationFrame) {
+					cancelAnimationFrame(
+						bearingAnimationFrame
+					);
+
+					bearingAnimationFrame =
+						null;
+				}
+
+				const startTime =
+					performance.now();
+
+				const animate =
+					now => {
+						if (
+							animationId !==
+							bearingAnimationId
+						) {
+							return;
+						}
+
+						const progress =
+							clamp(
+								(now - startTime) /
+								smoothBearingDuration,
+								0,
+								1
+							);
+
+						const eased =
+							1 -
+							Math.pow(
+								1 - progress,
+								3
+							);
+
+						currentBearing =
+							normalizeBearing(
+								start +
+								difference *
+								eased
+							);
+
+						map.jumpTo({
+							bearing:
+								currentBearing
+						});
+
+						if (
+							progress < 1
+						) {
+							bearingAnimationFrame =
+								requestAnimationFrame(
+									animate
+								);
+						} else {
+							bearingAnimationFrame =
+								null;
+
+							currentBearing =
+								target;
+
+							map.jumpTo({
+								bearing:
+									currentBearing
+							});
+						}
+					};
+
+				bearingAnimationFrame =
+					requestAnimationFrame(
+						animate
+					);
 			}
 
-			function normalizeLocation(location) {
+			function interpolateBearing(
+				from,
+				to,
+				progress
+			) {
+				const difference =
+					shortestBearingDifference(
+						from,
+						to
+					);
+
+				return normalizeBearing(
+					from +
+					difference *
+					progress
+				);
+			}
+
+			function normalizeLocation(
+				location
+			) {
 				if (!location) {
 					return null;
 				}
@@ -929,7 +1118,9 @@
 				};
 			}
 
-			function extractTimestamp(value) {
+			function extractTimestamp(
+				value
+			) {
 				if (!value) {
 					return null;
 				}
@@ -945,7 +1136,9 @@
 					value.coords?.timestamp
 				];
 
-				for (const candidate of candidates) {
+				for (
+					const candidate of candidates
+				) {
 					if (
 						candidate === undefined ||
 						candidate === null
@@ -968,7 +1161,9 @@
 						Number(candidate);
 
 					if (
-						Number.isFinite(numeric)
+						Number.isFinite(
+							numeric
+						)
 					) {
 						return numeric < 10000000000 ?
 							numeric * 1000 :
@@ -979,7 +1174,9 @@
 				return null;
 			}
 
-			function extractTimeZone(value) {
+			function extractTimeZone(
+				value
+			) {
 				if (!value) {
 					return null;
 				}
@@ -996,10 +1193,15 @@
 					value.streamer?.timezone
 				];
 
-				for (const candidate of candidates) {
+				for (
+					const candidate of candidates
+				) {
 					if (
-						typeof candidate === "string" &&
-						isValidTimeZone(candidate)
+						typeof candidate ===
+						"string" &&
+						isValidTimeZone(
+							candidate
+						)
 					) {
 						return candidate;
 					}
@@ -1008,9 +1210,12 @@
 				return null;
 			}
 
-			function isValidTimeZone(timeZone) {
+			function isValidTimeZone(
+				timeZone
+			) {
 				if (
-					typeof timeZone !== "string" ||
+					typeof timeZone !==
+					"string" ||
 					!timeZone
 				) {
 					return false;
@@ -1018,9 +1223,10 @@
 
 				try {
 					new Intl.DateTimeFormat(
-						"en-US", {
-						timeZone
-					}
+						"en-US",
+						{
+							timeZone
+						}
 					);
 
 					return true;
@@ -1034,7 +1240,9 @@
 				source = "location"
 			) {
 				if (
-					!isValidTimeZone(timeZone)
+					!isValidTimeZone(
+						timeZone
+					)
 				) {
 					return false;
 				}
@@ -1113,21 +1321,18 @@
 
 				return (
 					stateTimezones[
-					principalSubdivisionCode
+						principalSubdivisionCode
 					] ??
 					browserTimezone
 				);
 			}
 
 			function updateClock() {
-				if (!data) {
-					return;
-				}
-
 				const timeZone =
-					getTimezone(
-						data.principalSubdivisionCode
-					);
+					streamerTimeZone ||
+					Intl.DateTimeFormat()
+						.resolvedOptions()
+						.timeZone;
 
 				const timestamp =
 					lastStreamerTimestamp ||
@@ -1135,21 +1340,25 @@
 
 				clockEl.textContent =
 					new Intl.DateTimeFormat(
-						"pt-BR", {
-						timeZone,
-						hour: "2-digit",
-						minute: "2-digit",
-						second: "2-digit",
-						hour12: false
-					}
+						"pt-BR",
+						{
+							timeZone,
+							hour: "2-digit",
+							minute: "2-digit",
+							second: "2-digit",
+							hour12: false
+						}
 					).format(
 						new Date(timestamp)
 					);
 			}
 
-			let lastTemperatureCoordinate = null;
+			let lastTemperatureCoordinate =
+				null;
 
-			async function updateTemperature(location) {
+			async function updateTemperature(
+				location
+			) {
 				if (!location) {
 					return;
 				}
@@ -1170,7 +1379,8 @@
 				};
 
 				try {
-					temperatureRequestController?.abort?.();
+					temperatureRequestController
+						?.abort?.();
 
 					temperatureRequestController =
 						new AbortController();
@@ -1207,12 +1417,14 @@
 
 					const response =
 						await fetch(
-							url.toString(), {
-							method: "GET",
-							cache: "no-store",
-							signal: temperatureRequestController
-								.signal
-						}
+							url.toString(),
+							{
+								method: "GET",
+								cache: "no-store",
+								signal:
+									temperatureRequestController
+										.signal
+							}
 						);
 
 					if (!response.ok) {
@@ -1234,7 +1446,9 @@
 						temperature !== null
 					) {
 						temperatureEl.textContent =
-							`${Math.round(temperature)}°`;
+							`${Math.round(
+								temperature
+							)}°`;
 					}
 				} catch (error) {
 					if (
@@ -1275,10 +1489,11 @@
 
 				const response =
 					await fetch(
-						url.toString(), {
-						method: "GET",
-						cache: "no-store"
-					}
+						url.toString(),
+						{
+							method: "GET",
+							cache: "no-store"
+						}
 					);
 
 				if (!response.ok) {
@@ -1310,7 +1525,9 @@
 					if (
 						typeof candidate ===
 						"string" &&
-						isValidTimeZone(candidate)
+						isValidTimeZone(
+							candidate
+						)
 					) {
 						return candidate;
 					}
@@ -1321,7 +1538,9 @@
 						?.informative;
 
 				if (
-					Array.isArray(informative)
+					Array.isArray(
+						informative
+					)
 				) {
 					for (
 						const item of informative
@@ -1354,7 +1573,9 @@
 				return null;
 			}
 
-			function showLocation(data) {
+			function showLocation(
+				data
+			) {
 				const neighborhood =
 					data.locality ||
 					data.neighbourhood ||
@@ -1373,30 +1594,45 @@
 						neighborhood;
 
 					neighborhoodEl.classList
-						.remove("hidden");
+						.remove(
+							"hidden"
+						);
 
 					neighborhoodSkeleton.classList
-						.add("hidden");
+						.add(
+							"hidden"
+						);
 				}
 
 				const regionParts = [
 					city,
 					data.countryCode
-				].filter(Boolean);
+				].filter(
+					Boolean
+				);
 
-				if (regionParts.length) {
+				if (
+					regionParts.length
+				) {
 					regionEl.textContent =
-						regionParts.join(", ");
+						regionParts.join(
+							", "
+						);
 
 					regionEl.classList
-						.remove("hidden");
+						.remove(
+							"hidden"
+						);
 
 					regionSkeleton.classList
-						.add("hidden");
+						.add(
+							"hidden"
+						);
 				}
 
 				clockLabelEl.textContent =
-					data.principalSubdivision;
+					data.principalSubdivision ||
+					"";
 			}
 
 			async function updateLocationDetails(
@@ -1423,7 +1659,8 @@
 					...location
 				};
 
-				geocodingInProgress = true;
+				geocodingInProgress =
+					true;
 
 				try {
 					data =
@@ -1432,9 +1669,13 @@
 							location.longitude
 						);
 
-					showLocation(data);
+					showLocation(
+						data
+					);
 
-					if (!streamerTimeZone) {
+					if (
+						!streamerTimeZone
+					) {
 						const timeZone =
 							extractGeocoderTimeZone(
 								data
@@ -1460,47 +1701,64 @@
 
 			function addRouteLayers() {
 				map.addSource(
-					"travel-route", {
-					type: "geojson",
-					data: {
-						type: "Feature",
-						properties: {},
-						geometry: {
-							type: "LineString",
-							coordinates: []
+					"travel-route",
+					{
+						type: "geojson",
+						data: {
+							type: "Feature",
+							properties: {},
+							geometry: {
+								type: "LineString",
+								coordinates:
+									routeCoordinates
+							}
 						}
 					}
-				}
 				);
 
 				map.addLayer({
-					id: "travel-route-glow",
+					id:
+						"travel-route-glow",
 					type: "line",
-					source: "travel-route",
+					source:
+						"travel-route",
 					layout: {
-						"line-cap": "round",
-						"line-join": "round"
+						"line-cap":
+							"round",
+						"line-join":
+							"round"
 					},
 					paint: {
-						"line-color": mainColor,
-						"line-width": 10,
-						"line-opacity": 0.2,
-						"line-blur": 2.5
+						"line-color":
+							mainColor,
+						"line-width":
+							10,
+						"line-opacity":
+							0.2,
+						"line-blur":
+							2.5
 					}
 				});
 
 				map.addLayer({
-					id: "travel-route-line",
+					id:
+						"travel-route-line",
 					type: "line",
-					source: "travel-route",
+					source:
+						"travel-route",
 					layout: {
-						"line-cap": "round",
-						"line-join": "round"
+						"line-cap":
+							"round",
+						"line-join":
+							"round"
 					},
 					paint: {
-						"line-color": mainColor,
-						"line-width": 2.2,
-						"line-opacity": 0.95
+						"line-color":
+							mainColor,
+						"line-width":
+							2.2,
+						"line-opacity":
+							0.95
 					}
 				});
 			}
@@ -1519,7 +1777,8 @@
 
 				map =
 					new maplibregl.Map({
-						container: "map",
+						container:
+							"map",
 
 						style: {
 							version: 8,
@@ -1527,37 +1786,56 @@
 							sources: {
 								"google-satellite": {
 									type: "raster",
-									tiles: GOOGLE_SATELLITE_TILES,
-									tileSize: 256,
-									attribution: "Google"
+									tiles:
+										GOOGLE_SATELLITE_TILES,
+									tileSize:
+										256,
+									attribution:
+										"Google"
 								}
 							},
 
-							layers: [{
-								id: "google-satellite-layer",
-								type: "raster",
-								source: "google-satellite",
-								minzoom: 0,
-								maxzoom: 22
-							}],
+							layers: [
+								{
+									id:
+										"google-satellite-layer",
+									type:
+										"raster",
+									source:
+										"google-satellite",
+									minzoom:
+										0,
+									maxzoom:
+										22
+								}
+							],
 
 							sky: {}
 						},
 
-						center: defaultCenter,
+						center:
+							defaultCenter,
 
 						zoom,
 						pitch,
-						bearing: 0,
+						bearing:
+							currentBearing,
 
-						minZoom: 2,
-						maxZoom: 22,
-						maxPitch: 85,
+						minZoom:
+							2,
+						maxZoom:
+							22,
+						maxPitch:
+							85,
 
-						attributionControl: false,
-						interactive: false,
-						preserveDrawingBuffer: true,
-						antialias: true
+						attributionControl:
+							false,
+						interactive:
+							false,
+						preserveDrawingBuffer:
+							true,
+						antialias:
+							true
 					});
 
 				map.on(
@@ -1565,105 +1843,447 @@
 					() => {
 						addRouteLayers();
 
-						markerReady = true;
+						markerReady =
+							true;
 
 						updateRouteSource();
 					}
 				);
 			}
 
-			function animateRouteSegment(
+			function interpolateCoordinate(
+				a,
+				b,
+				progress
+			) {
+				return [
+					a[0] +
+					(b[0] - a[0]) *
+					progress,
+
+					a[1] +
+					(b[1] - a[1]) *
+					progress
+				];
+			}
+
+			function cleanRouteCoordinates(
+				coordinates
+			) {
+				if (
+					!Array.isArray(
+						coordinates
+					)
+				) {
+					return [];
+				}
+
+				const cleaned = [];
+
+				for (
+					const coordinate of coordinates
+				) {
+					if (
+						!Array.isArray(
+							coordinate
+						) ||
+						coordinate.length < 2
+					) {
+						continue;
+					}
+
+					const longitude =
+						toNumber(
+							coordinate[0]
+						);
+
+					const latitude =
+						toNumber(
+							coordinate[1]
+						);
+
+					if (
+						longitude === null ||
+						latitude === null
+					) {
+						continue;
+					}
+
+					const point = [
+						longitude,
+						latitude
+					];
+
+					const previous =
+						cleaned.at(-1);
+
+					if (
+						!previous ||
+						previous[0] !==
+							point[0] ||
+						previous[1] !==
+							point[1]
+					) {
+						cleaned.push(
+							point
+						);
+					}
+				}
+
+				return cleaned;
+			}
+
+			function prepareOSRMRoute(
+				coordinates
+			) {
+				const points =
+					cleanRouteCoordinates(
+						coordinates
+					);
+
+				if (
+					points.length < 2
+				) {
+					return {
+						coordinates:
+							points,
+						cumulativeDistances:
+							[0],
+						totalDistance: 0
+					};
+				}
+
+				const cumulative =
+					[0];
+
+				let total =
+					0;
+
+				for (
+					let index = 1;
+					index < points.length;
+					index++
+				) {
+					const a =
+						points[
+							index - 1
+						];
+
+					const b =
+						points[
+							index
+						];
+
+					total +=
+						metersBetween(
+							{
+								latitude:
+									a[1],
+								longitude:
+									a[0]
+							},
+							{
+								latitude:
+									b[1],
+								longitude:
+									b[0]
+							}
+						);
+
+					cumulative.push(
+						total
+					);
+				}
+
+				return {
+					coordinates:
+						points,
+					cumulativeDistances:
+						cumulative,
+					totalDistance:
+						total
+				};
+			}
+
+			function pointAlongOSRMRoute(
+				route,
+				progress
+			) {
+				if (
+					!route?.coordinates?.length
+				) {
+					return null;
+				}
+
+				if (
+					route.coordinates.length ===
+					1
+				) {
+					return [
+						...route.coordinates[0]
+					];
+				}
+
+				const clampedProgress =
+					clamp(
+						progress,
+						0,
+						1
+					);
+
+				const targetDistance =
+					route.totalDistance *
+					clampedProgress;
+
+				for (
+					let index = 1;
+					index <
+					route.coordinates.length;
+					index++
+				) {
+					const previousDistance =
+						route
+							.cumulativeDistances[
+								index - 1
+							];
+
+					const currentDistance =
+						route
+							.cumulativeDistances[
+								index
+							];
+
+					if (
+						targetDistance <=
+						currentDistance
+					) {
+						const segmentDistance =
+							currentDistance -
+							previousDistance;
+
+						const segmentProgress =
+							segmentDistance > 0 ?
+								(
+									targetDistance -
+									previousDistance
+								) /
+								segmentDistance :
+								0;
+
+						return interpolateCoordinate(
+							route.coordinates[
+								index - 1
+							],
+							route.coordinates[
+								index
+							],
+							segmentProgress
+						);
+					}
+				}
+
+				return [
+					...route.coordinates.at(
+						-1
+					)
+				];
+			}
+
+			function routePrefixCoordinates(
+				route,
+				progress
+			) {
+				if (
+					!route?.coordinates?.length
+				) {
+					return [];
+				}
+
+				if (
+					route.coordinates.length ===
+					1
+				) {
+					return [
+						[
+							...route.coordinates[0]
+						]
+					];
+				}
+
+				const clampedProgress =
+					clamp(
+						progress,
+						0,
+						1
+					);
+
+				const targetDistance =
+					route.totalDistance *
+					clampedProgress;
+
+				const result =
+					[
+						[
+							...route.coordinates[0]
+						]
+					];
+
+				for (
+					let index = 1;
+					index <
+					route.coordinates.length;
+					index++
+				) {
+					const previousDistance =
+						route
+							.cumulativeDistances[
+								index - 1
+							];
+
+					const currentDistance =
+						route
+							.cumulativeDistances[
+								index
+							];
+
+					if (
+						targetDistance <
+						currentDistance
+					) {
+						const segmentDistance =
+							currentDistance -
+							previousDistance;
+
+						const segmentProgress =
+							segmentDistance > 0 ?
+								(
+									targetDistance -
+									previousDistance
+								) /
+								segmentDistance :
+								0;
+
+						result.push(
+							interpolateCoordinate(
+								route.coordinates[
+									index - 1
+								],
+								route.coordinates[
+									index
+								],
+								segmentProgress
+							)
+						);
+
+						return result;
+					}
+
+					result.push([
+						...route.coordinates[
+							index
+						]
+					]);
+				}
+
+				return result;
+			}
+
+			async function requestOSRMRoute(
 				from,
 				to
 			) {
-				if (
-					!routeAnimation ||
-					routeAnimationDuration <= 0 ||
-					!map ||
-					!markerReady
-				) {
-					updateRouteSource();
-					return;
-				}
+				const url =
+					`https://router.project-osrm.org/route/v1/driving/${from[0]},${from[1]};${to[0]},${to[1]}?overview=full&geometries=geojson&steps=false`;
 
-				if (routeAnimationFrame) {
-					cancelAnimationFrame(
-						routeAnimationFrame
-					);
-				}
-
-				const startTime =
-					performance.now();
-
-				const originalLast =
-					routeCoordinates.at(-1);
-
-				if (
-					!originalLast ||
-					originalLast[0] !== from[0] ||
-					originalLast[1] !== from[1]
-				) {
-					updateRouteSource();
-					return;
-				}
-
-				const animate =
-					now => {
-						const progress =
-							clamp(
-								(now - startTime) /
-								routeAnimationDuration,
-								0,
-								1
-							);
-
-						const eased =
-							1 -
-							Math.pow(
-								1 - progress,
-								3
-							);
-
-						const longitude =
-							from[0] +
-							(to[0] - from[0]) *
-							eased;
-
-						const latitude =
-							from[1] +
-							(to[1] - from[1]) *
-							eased;
-
-						routeCoordinates[
-							routeCoordinates.length - 1
-						] = [
-								longitude,
-								latitude
-							];
-
-						updateRouteSource();
-
-						if (progress < 1) {
-							routeAnimationFrame =
-								requestAnimationFrame(
-									animate
-								);
-						} else {
-							routeCoordinates[
-								routeCoordinates.length - 1
-							] = to;
-
-							routeAnimationFrame =
-								null;
-
-							updateRouteSource();
+				const response =
+					await fetch(
+						url,
+						{
+							method: "GET",
+							cache: "no-store"
 						}
-					};
-
-				routeAnimationFrame =
-					requestAnimationFrame(
-						animate
 					);
+
+				if (
+					!response.ok
+				) {
+					throw new Error(
+						`OSRM request failed: ${response.status}`
+					);
+				}
+
+				const result =
+					await response.json();
+
+				const route =
+					result?.routes?.[0];
+
+				const coordinates =
+					route?.geometry?.coordinates;
+
+				if (
+					!Array.isArray(
+						coordinates
+					) ||
+					coordinates.length <
+						2
+				) {
+					throw new Error(
+						"OSRM returned no usable route geometry."
+					);
+				}
+
+				return {
+					...prepareOSRMRoute(
+						coordinates
+					),
+					rawStart:
+						from,
+					rawEnd:
+						to,
+					osrmEnd:
+						[
+							...coordinates.at(
+								-1
+							)
+						]
+				};
+			}
+
+			function appendRouteCoordinates(
+				coordinates
+			) {
+				const points =
+					cleanRouteCoordinates(
+						coordinates
+					);
+
+				if (
+					!points.length
+				) {
+					return;
+				}
+
+				for (
+					const point of points
+				) {
+					const previous =
+						routeCoordinates.at(
+							-1
+						);
+
+					if (
+						!previous ||
+						previous[0] !==
+							point[0] ||
+						previous[1] !==
+							point[1]
+					) {
+						routeCoordinates.push(
+							point
+						);
+					}
+				}
 			}
 
 			function updateRouteSource() {
@@ -1684,12 +2304,252 @@
 					properties: {},
 					geometry: {
 						type: "LineString",
-						coordinates: routeCoordinates
+						coordinates:
+							routeCoordinates
 					}
 				});
 			}
 
-			function applyLocation(
+			function animateOSRMRoute(
+				route,
+				startCoordinate,
+				finalCoordinate,
+				startBearing,
+				targetBearing
+			) {
+				return new Promise(
+					resolve => {
+						if (
+							routeAnimationFrame
+						) {
+							cancelAnimationFrame(
+								routeAnimationFrame
+							);
+
+							routeAnimationFrame =
+								null;
+						}
+
+						const originalLength =
+							routeCoordinates.length;
+
+						const baseLength =
+							Math.max(
+								0,
+								originalLength -
+								1
+							);
+
+						const routePrefix =
+							routePrefixCoordinates(
+								route,
+								0
+							);
+
+						if (
+							baseLength ===
+							originalLength
+						) {
+							appendRouteCoordinates(
+								routePrefix
+							);
+						} else {
+							routeCoordinates.length =
+								baseLength;
+
+							appendRouteCoordinates(
+								routePrefix
+							);
+						}
+
+						updateRouteSource();
+
+						if (
+							!routeAnimation ||
+							routeAnimationDuration <=
+								0 ||
+							!map ||
+							!markerReady
+						) {
+							routeCoordinates.length =
+								baseLength;
+
+							appendRouteCoordinates(
+								route.coordinates
+							);
+
+							updateRouteSource();
+
+							map.jumpTo({
+								center:
+									finalCoordinate,
+								bearing:
+									targetBearing
+							});
+
+							currentBearing =
+								normalizeBearing(
+									targetBearing
+								);
+
+							resolve();
+							return;
+						}
+
+						const startTime =
+							performance.now();
+
+						const animate =
+							now => {
+								const progress =
+									clamp(
+										(now -
+											startTime) /
+										routeAnimationDuration,
+										0,
+										1
+									);
+
+								const eased =
+									progress < 0.5 ?
+										4 *
+										Math.pow(
+											progress,
+											3
+										) :
+										1 -
+										Math.pow(
+											-2 *
+												progress +
+												2,
+											3
+										) /
+											2;
+
+								const currentCoordinate =
+									pointAlongOSRMRoute(
+										route,
+										eased
+									);
+
+								const visibleRoute =
+									routePrefixCoordinates(
+										route,
+										eased
+									);
+
+								routeCoordinates.length =
+									baseLength;
+
+								appendRouteCoordinates(
+									visibleRoute
+								);
+
+								if (
+									currentCoordinate
+								) {
+									map.jumpTo({
+										center:
+											currentCoordinate
+									});
+								}
+
+								if (
+									smoothBearingEnabled &&
+									Number.isFinite(
+										startBearing
+									) &&
+									Number.isFinite(
+										targetBearing
+									)
+								) {
+									currentBearing =
+										interpolateBearing(
+											startBearing,
+											targetBearing,
+											eased
+										);
+
+									if (
+										followBearing &&
+										pitch > 0
+									) {
+										map.jumpTo({
+											bearing:
+												currentBearing
+										});
+									}
+								} else if (
+									Number.isFinite(
+										targetBearing
+									)
+								) {
+									currentBearing =
+										normalizeBearing(
+											targetBearing
+										);
+
+									if (
+										followBearing &&
+										pitch > 0
+									) {
+										map.jumpTo({
+											bearing:
+												currentBearing
+										});
+									}
+								}
+
+								updateRouteSource();
+
+								if (
+									progress <
+									1
+								) {
+									routeAnimationFrame =
+										requestAnimationFrame(
+											animate
+										);
+								} else {
+									routeAnimationFrame =
+										null;
+
+									routeCoordinates.length =
+										baseLength;
+
+									appendRouteCoordinates(
+										route.coordinates
+									);
+
+									map.jumpTo({
+										center:
+											finalCoordinate,
+										bearing:
+											normalizeBearing(
+												targetBearing
+											)
+									});
+
+									currentBearing =
+										normalizeBearing(
+											targetBearing
+										);
+
+									updateRouteSource();
+
+									resolve();
+								}
+							};
+
+						routeAnimationFrame =
+							requestAnimationFrame(
+								animate
+							);
+					}
+				);
+			}
+
+			async function applyLocation(
 				rawLocation
 			) {
 				const location =
@@ -1731,19 +2591,53 @@
 					location.latitude
 				];
 
-				if (!firstFixReceived) {
-					firstFixReceived = true;
+				statusEl.classList
+					.remove(
+						"opacity-0"
+					);
 
-					map?.jumpTo({
-						center: coordinate,
-						zoom,
-						pitch,
-						bearing: currentBearing
-					});
-				} else {
-					map?.jumpTo({
-						center: coordinate
-					});
+				statusEl.classList
+					.add(
+						"opacity-100"
+					);
+
+				if (
+					!firstFixReceived
+				) {
+					firstFixReceived =
+						true;
+
+					lastCoordinate =
+						location;
+
+					routeCoordinates.push(
+						coordinate
+					);
+
+					if (map) {
+						map.jumpTo({
+							center:
+								coordinate,
+							zoom,
+							pitch,
+							bearing:
+								currentBearing
+						});
+					}
+
+					updateRouteSource();
+
+					await updateLocationDetails(
+						location
+					);
+
+					updateTemperature(
+						location
+					);
+
+					updateClock();
+
+					return;
 				}
 
 				if (
@@ -1751,43 +2645,111 @@
 					metersBetween(
 						lastCoordinate,
 						location
-					) >= 2
+					) <
+						MIN_BEARING_DISTANCE_METERS
 				) {
-					const previousCoordinate =
-						routeCoordinates.at(-1);
+					updateClock();
+					return;
+				}
 
-					routeCoordinates.push(
-						coordinate
-					);
+				const previousLocation =
+					lastCoordinate;
 
-					lastCoordinate =
-						location;
+				const previousCoordinate = [
+					previousLocation.longitude,
+					previousLocation.latitude
+				];
 
-					if (
-						previousCoordinate &&
-						routeAnimation
-					) {
-						routeCoordinates[
-							routeCoordinates.length - 1
-						] =
-							previousCoordinate;
+				let targetBearing =
+					lastHeading;
 
-						animateRouteSegment(
+				if (
+					!Number.isFinite(
+						targetBearing
+					)
+				) {
+					targetBearing =
+						calculateBearing(
+							previousLocation,
+							location
+						);
+				}
+
+				const startBearing =
+					currentBearing;
+
+				let route = null;
+
+				try {
+					route =
+						await requestOSRMRoute(
 							previousCoordinate,
 							coordinate
 						);
+				} catch (error) {
+					console.warn(
+						"OSRM route error:",
+						error
+					);
+
+					if (
+						routeAnimationFrame
+					) {
+						cancelAnimationFrame(
+							routeAnimationFrame
+						);
+
+						routeAnimationFrame =
+							null;
+					}
+
+					if (map) {
+						map.jumpTo({
+							center:
+								coordinate
+						});
+					}
+
+					appendRouteCoordinates([
+						coordinate
+					]);
+
+					updateRouteSource();
+				}
+
+				lastCoordinate =
+					location;
+
+				if (route) {
+					const finalCoordinate =
+						followOSRM ?
+							[
+								...route.osrmEnd
+							] :
+							coordinate;
+
+					await animateOSRMRoute(
+						route,
+						previousCoordinate,
+						finalCoordinate,
+						startBearing,
+						targetBearing
+					);
+				} else {
+					if (
+						smoothBearingEnabled
+					) {
+						animateBearingTo(
+							targetBearing
+						);
 					} else {
-						updateRouteSource();
+						setMapBearing(
+							targetBearing
+						);
 					}
 				}
 
-				statusEl.classList
-					.remove("opacity-0");
-
-				statusEl.classList
-					.add("opacity-100");
-
-				updateLocationDetails(
+				await updateLocationDetails(
 					location
 				);
 
@@ -1798,7 +2760,9 @@
 				updateClock();
 			}
 
-			function createSpeedDigit(digit) {
+			function createSpeedDigit(
+				digit
+			) {
 				const wrapper =
 					document.createElement(
 						"span"
@@ -1819,7 +2783,9 @@
 					"speed-digit-track";
 
 				for (
-					let i = 0; i < 30; i++
+					let i = 0;
+					i < 30;
+					i++
 				) {
 					const number =
 						document.createElement(
@@ -1842,8 +2808,9 @@
 				);
 
 				track.style.transform =
-					`translateY(-${digit *
-					SPEED_DIGIT_HEIGHT
+					`translateY(-${
+						digit *
+						SPEED_DIGIT_HEIGHT
 					}px)`;
 
 				return wrapper;
@@ -1877,9 +2844,13 @@
 				let delta =
 					to - from;
 
-				if (delta > 5) {
+				if (
+					delta > 5
+				) {
 					delta -= 10;
-				} else if (delta < -5) {
+				} else if (
+					delta < -5
+				) {
 					delta += 10;
 				}
 
@@ -1889,7 +2860,9 @@
 			function animateSpeedTo(
 				target
 			) {
-				if (speedAnimationTimer) {
+				if (
+					speedAnimationTimer
+				) {
 					clearTimeout(
 						speedAnimationTimer
 					);
@@ -1899,8 +2872,9 @@
 				}
 
 				const fromDigits =
-					String(displayedSpeed)
-						.split("");
+					String(
+						displayedSpeed
+					).split("");
 
 				const toDigits =
 					String(target)
@@ -1915,16 +2889,13 @@
 						fromDigits.length;
 
 					for (
-						let i = 0; i < difference; i++
+						let i = 0;
+						i < difference;
+						i++
 					) {
-						const digitIndex =
-							i;
-
 						const digit =
 							Number(
-								toDigits[
-								digitIndex
-								]
+								toDigits[i]
 							);
 
 						const newDigit =
@@ -1960,13 +2931,17 @@
 						toDigits.length;
 
 					for (
-						let i = 0; i < difference; i++
+						let i = 0;
+						i < difference;
+						i++
 					) {
 						const digit =
 							speedEl
 								.firstElementChild;
 
-						if (digit) {
+						if (
+							digit
+						) {
 							digit.classList
 								.add(
 									"speed-digit-removing"
@@ -2012,7 +2987,7 @@
 
 								const currentChar =
 									currentDigits[
-									index
+										index
 									];
 
 								const fromDigit =
@@ -2029,7 +3004,7 @@
 								const targetDigit =
 									Number(
 										toDigits[
-										index
+											index
 										]
 									);
 
@@ -2051,19 +3026,22 @@
 									"none";
 
 								track.style.transform =
-									`translateY(-${baseIndex *
-									SPEED_DIGIT_HEIGHT
+									`translateY(-${
+										baseIndex *
+										SPEED_DIGIT_HEIGHT
 									}px)`;
 
 								void track.offsetHeight;
 
 								track.style.transition =
-									`transform ${duration
+									`transform ${
+										duration
 									}ms cubic-bezier(.22,.61,.36,1)`;
 
 								track.style.transform =
-									`translateY(-${targetIndex *
-									SPEED_DIGIT_HEIGHT
+									`translateY(-${
+										targetIndex *
+										SPEED_DIGIT_HEIGHT
 									}px)`;
 
 								wheel.classList
@@ -2100,7 +3078,7 @@
 											const digit =
 												Number(
 													toDigits[
-													index
+														index
 													]
 												);
 
@@ -2108,8 +3086,9 @@
 												"none";
 
 											track.style.transform =
-												`translateY(-${digit *
-												SPEED_DIGIT_HEIGHT
+												`translateY(-${
+													digit *
+													SPEED_DIGIT_HEIGHT
 												}px)`;
 										}
 									);
@@ -2120,9 +3099,13 @@
 				);
 			}
 
-			function applySpeed(speed) {
+			function applySpeed(
+				speed
+			) {
 				const numericSpeed =
-					toNumber(speed);
+					toNumber(
+						speed
+					);
 
 				if (
 					numericSpeed === null
@@ -2134,12 +3117,14 @@
 					Math.max(
 						0,
 						Math.round(
-							numericSpeed * 3.6
+							numericSpeed *
+							3.6
 						)
 					);
 
 				if (
-					displayedSpeed === null
+					displayedSpeed ===
+					null
 				) {
 					displayedSpeed =
 						targetSpeed;
@@ -2158,7 +3143,9 @@
 					return;
 				}
 
-				if (!speedAnimation) {
+				if (
+					!speedAnimation
+				) {
 					displayedSpeed =
 						targetSpeed;
 
@@ -2174,12 +3161,16 @@
 				);
 			}
 
-			function debugSpeed(value) {
+			function debugSpeed(
+				value
+			) {
 				const target =
 					Number(value);
 
 				if (
-					!Number.isFinite(target) ||
+					!Number.isFinite(
+						target
+					) ||
 					target < 0
 				) {
 					console.warn(
@@ -2190,9 +3181,12 @@
 				}
 
 				console.log(
-					`Speed: ${displayedSpeed ??
-					"--"
-					} → ${target} km/h`
+					`Speed: ${
+						displayedSpeed ??
+						"--"
+					} → ${
+						target
+					} km/h`
 				);
 
 				applySpeed(
@@ -2203,20 +3197,36 @@
 			window.debugSpeed =
 				debugSpeed;
 
-			function applyHeading(heading) {
+			function applyHeading(
+				heading
+			) {
 				const value =
-					toNumber(heading);
+					toNumber(
+						heading
+					);
 
-				if (value === null) {
+				if (
+					value === null
+				) {
 					return;
 				}
 
 				lastHeading =
-					normalizeBearing(value);
+					normalizeBearing(
+						value
+					);
 
-				updateMapBearing(
-					lastHeading
-				);
+				if (
+					smoothBearingEnabled
+				) {
+					animateBearingTo(
+						lastHeading
+					);
+				} else {
+					setMapBearing(
+						lastHeading
+					);
+				}
 			}
 
 			function connectToPullKey() {
@@ -2295,11 +3305,19 @@
 				}
 			}
 
-			function isModerator(message) {
+			function isModerator(
+				message
+			) {
 				const badges =
-					message?.sender?.identity?.badges;
+					message?.sender
+						?.identity
+						?.badges;
 
-				if (!Array.isArray(badges)) {
+				if (
+					!Array.isArray(
+						badges
+					)
+				) {
 					return false;
 				}
 
@@ -2307,13 +3325,17 @@
 					badge =>
 						badge &&
 						(
-							badge.type === "moderator" ||
-							badge.type === "broadcaster"
+							badge.type ===
+								"moderator" ||
+							badge.type ===
+								"broadcaster"
 						)
 				);
 			}
 
-			function parseRadarCommand(content) {
+			function parseRadarCommand(
+				content
+			) {
 				if (
 					typeof content !==
 					"string"
@@ -2329,7 +3351,9 @@
 						/^!radar(?:\s+(.+?))?\s*$/i
 					);
 
-				if (!match) {
+				if (
+					!match
+				) {
 					return null;
 				}
 
@@ -2338,29 +3362,40 @@
 						?.trim()
 						.toLowerCase();
 
-				if (!argument) {
+				if (
+					!argument
+				) {
 					return {
-						type: "toggle"
+						type:
+							"toggle"
 					};
 				}
 
 				if (
-					argument === "1" ||
-					argument === "true"
+					argument ===
+						"1" ||
+					argument ===
+						"true"
 				) {
 					return {
-						type: "set",
-						value: true
+						type:
+							"set",
+						value:
+							true
 					};
 				}
 
 				if (
-					argument === "0" ||
-					argument === "false"
+					argument ===
+						"0" ||
+					argument ===
+						"false"
 				) {
 					return {
-						type: "set",
-						value: false
+						type:
+							"set",
+						value:
+							false
 					};
 				}
 
@@ -2371,7 +3406,9 @@
 				message
 			) {
 				if (
-					!isModerator(message)
+					!isModerator(
+						message
+					)
 				) {
 					return;
 				}
@@ -2381,7 +3418,9 @@
 						message?.content
 					);
 
-				if (!command) {
+				if (
+					!command
+				) {
 					return;
 				}
 
@@ -2389,7 +3428,8 @@
 					command.type ===
 					"toggle"
 				) {
-					showRadar = !showRadar;
+					showRadar =
+						!showRadar;
 				} else {
 					showRadar =
 						command.value;
@@ -2398,17 +3438,21 @@
 				updateRadarVisibility();
 
 				console.log(
-					`Radar ${showRadar
-						? "enabled"
-						: "disabled"
+					`Radar ${
+						showRadar
+							? "enabled"
+							: "disabled"
 					} by Kick moderator command.`
 				);
 			}
 
-			let kickClient = null;
+			let kickClient =
+				null;
 
 			function connectToKick() {
-				if (!CHANNEL) {
+				if (
+					!CHANNEL
+				) {
 					console.log(
 						"kickChannel not provided; Kick control disabled."
 					);
@@ -2418,9 +3462,9 @@
 
 				if (
 					typeof kichat ===
-					"undefined" ||
+						"undefined" ||
 					typeof kichat.KiChatjs !==
-					"function"
+						"function"
 				) {
 					console.error(
 						"kichat.js failed to load."
@@ -2467,7 +3511,7 @@
 							if (
 								slug &&
 								slug.toLowerCase() !==
-								CHANNEL.toLowerCase()
+									CHANNEL.toLowerCase()
 							) {
 								return;
 							}
@@ -2507,34 +3551,56 @@
 					try {
 						locationSubscription
 							?.dispose?.();
-					} catch (_) { }
+					} catch (_) {}
 
 					try {
 						speedSubscription
 							?.dispose?.();
-					} catch (_) { }
+					} catch (_) {}
 
 					try {
 						headingSubscription
 							?.dispose?.();
-					} catch (_) { }
+					} catch (_) {}
 
 					try {
 						temperatureRequestController
 							?.abort?.();
-					} catch (_) { }
+					} catch (_) {}
+
+					try {
+						if (
+							routeAnimationFrame
+						) {
+							cancelAnimationFrame(
+								routeAnimationFrame
+							);
+						}
+					} catch (_) {}
+
+					try {
+						if (
+							bearingAnimationFrame
+						) {
+							cancelAnimationFrame(
+								bearingAnimationFrame
+							);
+						}
+					} catch (_) {}
 
 					try {
 						kickClient
 							?.close?.();
-					} catch (_) { }
+					} catch (_) {}
 				}
 			);
 
 			initializeMap();
 
 			setTimeZone(
-				"pt-BR",
+				Intl.DateTimeFormat()
+					.resolvedOptions()
+					.timeZone,
 				"fallback"
 			);
 
@@ -2551,6 +3617,16 @@
 	</script>
 
 	<style>
+		:root {
+			font-family: "Inter", sans-serif;
+		}
+
+		html,
+		body,
+		#widget {
+			font-family: "Inter", sans-serif;
+		}
+
 		@keyframes avatar-pulse {
 
 			0%,
